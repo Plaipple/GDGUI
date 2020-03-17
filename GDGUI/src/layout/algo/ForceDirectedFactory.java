@@ -5,6 +5,7 @@ import com.yworks.yfiles.algorithms.YDimension;
 import com.yworks.yfiles.algorithms.YOrientedRectangle;
 import com.yworks.yfiles.algorithms.YPoint;
 import com.yworks.yfiles.algorithms.YVector;
+import com.yworks.yfiles.geometry.PointD;
 import com.yworks.yfiles.graph.IEdge;
 import com.yworks.yfiles.graph.IGraph;
 import com.yworks.yfiles.graph.IMapper;
@@ -124,6 +125,7 @@ public class ForceDirectedFactory {
             double u_y = u.getLayout().getCenter().y;
 
             YPoint p_u = new YPoint(u_x, u_y);
+            PointD p_u_d = new PointD(u_x, u_y);
             
             for (IEdge z : graph.getEdges())
             {
@@ -138,60 +140,37 @@ public class ForceDirectedFactory {
             	double z_u_x = z_u.getLayout().getCenter().x;
                 double z_u_y = z_u.getLayout().getCenter().y;
                 YPoint p_z_u = new YPoint(z_u_x, z_u_y);
+                PointD p_z_u_d = new PointD(z_u_x, z_u_y);
                 
                 double z_v_x = z_v.getLayout().getCenter().x;
                 double z_v_y = z_v.getLayout().getCenter().y;
                 YPoint p_z_v = new YPoint(z_v_x, z_v_y);
+                PointD p_z_v_d = new PointD(z_v_x, z_v_y);
             	
-            	YVector z_vec = new YVector(p_z_u, p_z_v);
-            	z_vec = YVector.orthoNormal(z_vec);
-            	YVector z_vec2 = new YVector(z_vec.rotate(Math.PI));
-            	
-            	YOrientedRectangle rec1;
-            	YOrientedRectangle rec2;
-            	
+            	YVector z_vec1 = new YVector(p_z_u, p_z_v);
+             	z_vec1 = YVector.orthoNormal(z_vec1);
+            	YVector z_vec2 = new YVector(z_vec1.rotate(Math.PI));
+          	
             	YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
             	
-            	if (z_u_x > z_v_x)
-            	{
-            		if (z_vec.getY() < 0)
-                	{
-                		rec1 = new YOrientedRectangle(p_z_u, dim, z_vec);
-                		rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
-                	}
-            		else
-            		{
-            			rec1 = new YOrientedRectangle(p_z_v, dim, z_vec);
-                		rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
-            		}
-            	}
-            	else
-            	{
-            		if (z_vec.getY() < 0)
-            		{
-            			rec1 = new YOrientedRectangle(p_z_v, dim, z_vec);
-                		rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
-            		}
-            		else
-            		{
-            			rec1 = new YOrientedRectangle(p_z_u, dim, z_vec);
-                		rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
-            		}
-            	}
+            	YOrientedRectangle rec1 = new YOrientedRectangle(p_z_v, dim, z_vec1);
+            	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
             	
             	
             	if (rec1.contains(z_u_x, z_u_y) || rec2.contains(z_u_x, z_u_y))
             	{
-            		System.out.println("lol");
+            		System.out.println("inside");
+            		/*
+            			YVector temp = new YVector(p_u);
+            			temp.norm();
+
+                    	temp.scale(threshold * electricalRepulsion / Math.pow(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d),2));
+                    	vectors.add(temp);            			
+            		*/
             	}
-            	
-            	/**  
-            	*   Calculate the shortest distance between the node u and the edge z
-            	*   This is always the point (p_z) where the distance vector between u and z is perpendicular to z 
-            	*   Use the scale method between p_z and p_u to calculate the electric repulsion and apply 
-            	*   the forces to the two nodes of edge z and to u.
-            	*/
+
             }
+            //map.getValue(u).addAll(vectors);
     	}
     }
 }
