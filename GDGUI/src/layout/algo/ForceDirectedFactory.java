@@ -1,6 +1,8 @@
 package layout.algo;
 
 import com.yworks.yfiles.algorithms.GraphConnectivity;
+import com.yworks.yfiles.algorithms.YDimension;
+import com.yworks.yfiles.algorithms.YOrientedRectangle;
 import com.yworks.yfiles.algorithms.YPoint;
 import com.yworks.yfiles.algorithms.YVector;
 import com.yworks.yfiles.graph.IEdge;
@@ -127,6 +129,61 @@ public class ForceDirectedFactory {
             {
             	INode z_u = z.getSourceNode();
             	INode z_v = z.getTargetNode();
+            	
+            	if (u == z_u || u == z_v)
+            	{
+            		continue;
+            	}
+            	
+            	double z_u_x = z_u.getLayout().getCenter().x;
+                double z_u_y = z_u.getLayout().getCenter().y;
+                YPoint p_z_u = new YPoint(z_u_x, z_u_y);
+                
+                double z_v_x = z_v.getLayout().getCenter().x;
+                double z_v_y = z_v.getLayout().getCenter().y;
+                YPoint p_z_v = new YPoint(z_v_x, z_v_y);
+            	
+            	YVector z_vec = new YVector(p_z_u, p_z_v);
+            	z_vec = YVector.orthoNormal(z_vec);
+            	YVector z_vec2 = new YVector(z_vec.rotate(Math.PI));
+            	
+            	YOrientedRectangle rec1;
+            	YOrientedRectangle rec2;
+            	
+            	YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
+            	
+            	if (z_u_x > z_v_x)
+            	{
+            		if (z_vec.getY() < 0)
+                	{
+                		rec1 = new YOrientedRectangle(p_z_u, dim, z_vec);
+                		rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
+                	}
+            		else
+            		{
+            			rec1 = new YOrientedRectangle(p_z_v, dim, z_vec);
+                		rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
+            		}
+            	}
+            	else
+            	{
+            		if (z_vec.getY() < 0)
+            		{
+            			rec1 = new YOrientedRectangle(p_z_v, dim, z_vec);
+                		rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
+            		}
+            		else
+            		{
+            			rec1 = new YOrientedRectangle(p_z_u, dim, z_vec);
+                		rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
+            		}
+            	}
+            	
+            	
+            	if (rec1.contains(z_u_x, z_u_y) || rec2.contains(z_u_x, z_u_y))
+            	{
+            		System.out.println("lol");
+            	}
             	
             	/**  
             	*   Calculate the shortest distance between the node u and the edge z

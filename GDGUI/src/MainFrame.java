@@ -966,8 +966,9 @@ public class MainFrame extends JFrame {
 
         ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations) {
             public void calculateVectors() {
-                ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
-                ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
+               // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
+               // ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
+                ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 50000, 0.01, map);
             }
         };
         fd.addAlgorithmListener(new AlgorithmListener() {
