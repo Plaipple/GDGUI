@@ -94,6 +94,14 @@ public class MainFrame extends JFrame {
                 System.exit(0);
             }
         });
+      
+        /*
+        INode u = graph.createNode(new PointD(0, 0));
+        INode v = graph.createNode(new PointD(100, 0));
+        INode w = graph.createNode(new PointD(50, -5));
+        INode q = graph.createNode(new PointD(50, 5));
+        graph.createEdge(u, v);
+        */
     }
 
     /**
@@ -966,8 +974,8 @@ public class MainFrame extends JFrame {
 
         ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations) {
             public void calculateVectors() {
-               // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
-               // ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
+              //  ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
+              //  ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
                 ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 50000, 0.01, map);
             }
         };

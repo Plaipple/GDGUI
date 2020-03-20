@@ -114,63 +114,95 @@ public class ForceDirectedFactory {
      */
     public static void calculateElectricForcesNodeEdge(IGraph graph, double electricalRepulsion, double threshold, IMapper<INode, List<YVector>> map)
     {
+    	//Declaration of Array Lists for the electric forces that are to be added up, to apply to the several 
+    	//target/source nodes of the edges and the nodes which are too close to the edges
+    	List<YVector> vectors_node;
+    	List<YVector> vectors_edge;
     	
-    	List<YVector> vectors;
-    	
-    	for (INode u : graph.getNodes())
-    	{
-    		vectors = new java.util.ArrayList<YVector>();
+    	//Loop over each edge
+    	for (IEdge z : graph.getEdges())
+    	{    		
+    		vectors_edge = new java.util.ArrayList<YVector>();
     		
-    		double u_x = u.getLayout().getCenter().x;
-            double u_y = u.getLayout().getCenter().y;
+    		INode z_u = z.getSourceNode();
+    		INode z_v = z.getTargetNode();
 
-            YPoint p_u = new YPoint(u_x, u_y);
-            PointD p_u_d = new PointD(u_x, u_y);
-            
-            for (IEdge z : graph.getEdges())
-            {
-            	INode z_u = z.getSourceNode();
-            	INode z_v = z.getTargetNode();
-            	
-            	if (u == z_u || u == z_v)
+    		double z_u_x = z_u.getLayout().getCenter().x;
+    		double z_u_y = z_u.getLayout().getCenter().y;
+    		YPoint p_z_u = new YPoint(z_u_x, z_u_y);
+    		PointD p_z_u_d = new PointD(z_u_x, z_u_y);
+
+    		double z_v_x = z_v.getLayout().getCenter().x;
+    		double z_v_y = z_v.getLayout().getCenter().y;
+    		YPoint p_z_v = new YPoint(z_v_x, z_v_y);
+    		PointD p_z_v_d = new PointD(z_v_x, z_v_y);
+
+    		//Creating the direction-vectors for the rectangles that are used to check, 
+    		//if the nodes are in the specific area at which the algorithm should be executed
+    		YVector z_vec1 = new YVector(p_z_u, p_z_v);
+    		z_vec1 = YVector.orthoNormal(z_vec1);
+    		YVector z_vec2 = new YVector(z_vec1.rotate(Math.PI));
+    		z_vec2.norm();
+    		
+    		//Creating the dimension for the two rectangles
+    		//the width is always the length of the edge and the height is ten times the edge.    		
+    		YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
+        	
+    		//The Orientation of the rectangles is that they are always positioned so that the short 
+    		//side (width) is the edge and the height is orthogonal to the edge on both sides
+        	YOrientedRectangle rec1 = new YOrientedRectangle(p_z_u, dim, z_vec1);
+        	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
+
+    		for (INode u : graph.getNodes())
+    		{
+    			//If the iterated node is one of the edges target/source nodes, then 
+    			//don't consider that vertex
+    			if (u == z_u || u == z_v)
             	{
             		continue;
             	}
-            	
-            	double z_u_x = z_u.getLayout().getCenter().x;
-                double z_u_y = z_u.getLayout().getCenter().y;
-                YPoint p_z_u = new YPoint(z_u_x, z_u_y);
-                PointD p_z_u_d = new PointD(z_u_x, z_u_y);
+    			
+    			vectors_node = new java.util.ArrayList<YVector>();
+    			
+    			double u_x = u.getLayout().getCenter().x;
+                double u_y = u.getLayout().getCenter().y;
+    			
+                YPoint p_u = new YPoint(u_x, u_y);
+                PointD p_u_d = new PointD(u_x, u_y);
                 
-                double z_v_x = z_v.getLayout().getCenter().x;
-                double z_v_y = z_v.getLayout().getCenter().y;
-                YPoint p_z_v = new YPoint(z_v_x, z_v_y);
-                PointD p_z_v_d = new PointD(z_v_x, z_v_y);
-            	
-            	YVector z_vec1 = new YVector(p_z_u, p_z_v);
-             	z_vec1 = YVector.orthoNormal(z_vec1);
-            	YVector z_vec2 = new YVector(z_vec1.rotate(Math.PI));
-          	
-            	YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
-            	
-            	YOrientedRectangle rec1 = new YOrientedRectangle(p_z_v, dim, z_vec1);
-            	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_u, dim, z_vec2);
-            	
-            	
-            	if (rec1.contains(z_u_x, z_u_y) || rec2.contains(z_u_x, z_u_y))
+                //The scale formula for the electric forces is only applied to nodes which
+                //are inside one of the two rectangles that were created above
+                if (rec1.contains(u_x, u_y) || rec2.contains(u_x, u_y))
             	{
-            		System.out.println("inside");
-            		/*
-            			YVector temp = new YVector(p_u);
-            			temp.norm();
+            		//System.out.println("inside");
+            		
+            		YVector temp;
+            		
+            		//Set up the new vector for the force in one of the two directions
+            		//relative to the edge depending on which side of the edge the node is positioned
+            		if (rec1.contains(u_x, u_y))
+            		{
+            			temp = new YVector(z_vec1);
+            		}
+            		else
+            		{
+            			temp = new YVector(z_vec2);
+            		}
+            		
+            		temp.norm();
 
-                    	temp.scale(threshold * electricalRepulsion / Math.pow(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d),2));
-                    	vectors.add(temp);            			
-            		*/
+            		//Calculate the electrical forces. One for the node that is too close to an edge
+            		//And the 180° turned around force for the source/target nodes of the edge
+                    temp.scale(threshold * electricalRepulsion / Math.pow(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d),2));
+                    YVector temp_edge = new YVector(temp.rotate(Math.PI));
+                    vectors_node.add(temp);
+                    vectors_edge.add(temp_edge);
+            		
             	}
-
-            }
-            //map.getValue(u).addAll(vectors);
+                map.getValue(u).addAll(vectors_node);
+    		} 
+            map.getValue(z_u).addAll(vectors_edge);
+            map.getValue(z_v).addAll(vectors_edge);
     	}
     }
 }
