@@ -200,6 +200,8 @@ public class ForceDirectedFactory {
             		
             	}
                 map.getValue(u).addAll(vectors_node);
+                //map.getValue(z_u).addAll(vectors_edge);
+                //map.getValue(z_v).addAll(vectors_edge);
     		} 
             map.getValue(z_u).addAll(vectors_edge);
             map.getValue(z_v).addAll(vectors_edge);

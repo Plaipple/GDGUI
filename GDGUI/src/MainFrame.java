@@ -95,13 +95,6 @@ public class MainFrame extends JFrame {
             }
         });
       
-        /*
-        INode u = graph.createNode(new PointD(0, 0));
-        INode v = graph.createNode(new PointD(100, 0));
-        INode w = graph.createNode(new PointD(50, -5));
-        INode q = graph.createNode(new PointD(50, 5));
-        graph.createEdge(u, v);
-        */
     }
 
     /**
@@ -960,23 +953,31 @@ public class MainFrame extends JFrame {
 
     private void springEmbedderItemActionPerformed(ActionEvent evt) {
         JTextField iterationsTextField = new JTextField("1000");
+        JTextField repulsionTextField = new JTextField("50000");
+        JTextField thresholdTextField = new JTextField("0.01");
         int iterations = 1000;
+        double electricrepulsion = 50000;
+        double threshold = 0.01;
 
-        int result = JOptionPane.showOptionDialog(null, new Object[]{"Number of Iterations: ", iterationsTextField}, "Algorithm Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+        int result = JOptionPane.showOptionDialog(null, new Object[]{"Number of Iterations: ", iterationsTextField, "Repulsion Value: ", repulsionTextField, "Threshold: ", thresholdTextField},
+        		"Algorithm Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+        
 
         if (result == JOptionPane.OK_OPTION) {
             try {
                 iterations = Integer.parseInt(iterationsTextField.getText());
+                electricrepulsion = Double.parseDouble(repulsionTextField.getText());
+                threshold = Double.parseDouble(thresholdTextField.getText());
             } catch (NumberFormatException exc) {
                 JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 5000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
             }
         }
 
-        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations) {
+        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold) {
             public void calculateVectors() {
-              //  ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
-              //  ForceDirectedFactory.calculateElectricForcesEades(graph, 50000, 0.01, map);
-                ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 50000, 0.01, map);
+               // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, threshold, map);
+               // ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
+                ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
             }
         };
         fd.addAlgorithmListener(new AlgorithmListener() {
