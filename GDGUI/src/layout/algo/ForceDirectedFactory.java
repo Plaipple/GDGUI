@@ -154,20 +154,20 @@ public class ForceDirectedFactory {
         	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
 
     		for (INode u : graph.getNodes())
-    		{
+    		{    			
     			//If the iterated node is one of the edges target/source nodes, then 
     			//don't consider that vertex
-    			if (u == z_u || u == z_v)
+    			if (u == z_u || u == z_v )
             	{
             		continue;
             	}
     			
+    			double factor;
     			vectors_node = new java.util.ArrayList<YVector>();
     			
     			double u_x = u.getLayout().getCenter().x;
                 double u_y = u.getLayout().getCenter().y;
     			
-                YPoint p_u = new YPoint(u_x, u_y);
                 PointD p_u_d = new PointD(u_x, u_y);
                 
                 //The scale formula for the electric forces is only applied to nodes which
@@ -193,15 +193,18 @@ public class ForceDirectedFactory {
 
             		//Calculate the electrical forces. One for the node that is too close to an edge
             		//And the 180° turned around force for the source/target nodes of the edge
-                    temp.scale(threshold * electricalRepulsion / Math.pow(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d),2));
+            		//if the factor gets too big create an upper bound, so that the nodes do not jump away
+            		//at the beginning of the execution if the graph is very narrow
+            		factor = threshold * electricalRepulsion / Math.pow(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d),2);            		
+            		if (factor > 3) factor = 3;
+            		
+                    temp.scale(factor);
                     YVector temp_edge = new YVector(temp.rotate(Math.PI));
                     vectors_node.add(temp);
                     vectors_edge.add(temp_edge);
             		
             	}
                 map.getValue(u).addAll(vectors_node);
-                //map.getValue(z_u).addAll(vectors_edge);
-                //map.getValue(z_v).addAll(vectors_edge);
     		} 
             map.getValue(z_u).addAll(vectors_edge);
             map.getValue(z_v).addAll(vectors_edge);
