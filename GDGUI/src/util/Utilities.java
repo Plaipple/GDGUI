@@ -71,7 +71,11 @@ public class Utilities {
         int maxDegree = -1;
         for (INode n : graph.getGraph().getNodes())
         {
-            maxDegree = Math.max(maxDegree, n.getPorts().size());
+        	IListEnumerable<IPort> nPorts = n.getPorts();
+        	for (IPort p : nPorts)
+            {
+        		maxDegree = Math.max(maxDegree, graph.getGraph().edgesAt(p, AdjacencyTypes.ALL).size());
+            }
         }
         return maxDegree;
     }
