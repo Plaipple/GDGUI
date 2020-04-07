@@ -15,9 +15,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 
 import com.yworks.yfiles.graph.IGraph;
+import com.yworks.yfiles.graph.LayoutUtilities;
 import com.yworks.yfiles.graphml.GraphMLIOHandler;
+import com.yworks.yfiles.layout.organic.OrganicLayout;
  
 public class Experiment
 {
@@ -34,9 +37,9 @@ public class Experiment
     {
         try
         {
-            String csv = "C:/Users/patri_000/Desktop/results.csv";
+            String txt = "C:/Users/patri_000/Desktop/results.txt";
 
-            java.io.FileWriter fstream = new java.io.FileWriter(csv, false);
+            java.io.FileWriter fstream = new java.io.FileWriter(txt, false);
             java.io.BufferedWriter out = new java.io.BufferedWriter(fstream);
             out.write("");
             //Close the output stream
@@ -63,17 +66,40 @@ public class Experiment
                                                                         .append("Eades Crossings")
                                                                         .append("\t")
                                                                         .append("Eades Time")
+                                                                        .append("\t")
+                                                                        .append("\t")
+                                                                        .append("Graph")
+                                                                        .append("\t")
+                                                                        .append("Nodes")
+                                                                        .append("\t")
+                                                                        .append("Edges")
+                                                                        .append("\t")
+                                                                        .append("Max Degree")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Angular")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Crossing")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Iterations")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Edge Length")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Crossings")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Time")
                                                                         .append("\n");
 
-            fstream = new java.io.FileWriter(csv, true);
+            fstream = new java.io.FileWriter(txt, true);
             out = new java.io.BufferedWriter(fstream);
             out.write(header.toString());
             //Close the output stream
             out.close();
 
-            String directory = "C:/Users/patri_000/Desktop/Graphml/";
+            String inputDirectory = "C:/Users/patri_000/Desktop/Graphml/";
+            String outputDirectoryEades = "C:/Users/patri_000/Desktop/OutputEades/";
+            String outputDirectoryNodeEdge = "C:/Users/patri_000/Desktop/OutputNodeEdge/";
 
-            java.io.File dir = new java.io.File(directory);
+            java.io.File dir = new java.io.File(inputDirectory);
 
             // It is also possible to filter the list of returned files.
             java.io.FilenameFilter filter = new java.io.FilenameFilter()
@@ -99,6 +125,13 @@ public class Experiment
                 int eadesNoOfCrossings = 0;
                 int eadesIterations = 0;
                 long eadesTime = 0;
+                
+                double nodeEdgeAngular = 0;
+                double nodeEdgeCrossing = 0;
+                double nodeEdgeEdgeLength = 0.0;
+                int nodeEdgeNoOfCrossings = 0;
+                int nodeEdgeIterations = 0;
+                long nodeEdgeTime = 0;
 
                 long startTime = 0;
                 long finishTime = 0;
@@ -114,13 +147,12 @@ public class Experiment
                     //view.getGraph2D().clear();
                     view.getGraph().clear();
                     //ioh.read(view.getGraph2D(), directory + children[i]);
-                    ioh.read(view.getGraph(), directory + children[i]);
+                    ioh.read(view.getGraph(), inputDirectory + children[i]);
 
                     view.fitContent();
                     view.requestFocus();
 
-                    //maxDegree = util.Utilities.maxDegree(view.getGraph2D());
-                    //maxDegree = util.Utilities.maxDegree(view.getGraph());
+                    maxDegree = util.Utilities.maxDegree(view);
 
                    
                     startTime = System.currentTimeMillis();
@@ -130,27 +162,58 @@ public class Experiment
                         public void calculateVectors() {
                             layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 100, 100, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
+                            //layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
                         }
                     };
+                    
+                    LayoutUtilities.applyLayout(view.getGraph(), new OrganicLayout());
+                                       
                     eades.run();
 
                     finishTime = System.currentTimeMillis();
-
-                    /*
+                    
+                    ioh.write(view.getGraph(), outputDirectoryEades + children[i]);
+                    
                     eadesAngular = util.Utilities.calculateAngularResolution(view);
                     eadesCrossing = util.Utilities.calculateCrossingResolution(view);
                     eadesEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
                     eadesNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     eadesIterations = eades.getMaxNoOfIterations();
                     eadesTime = (finishTime - startTime);
-          			*/
+                    
+                    view.getGraph().clear();
+                    ioh.read(view.getGraph(), inputDirectory + children[i]);
+                    view.fitContent();
+                    view.requestFocus();
+                    startTime = System.currentTimeMillis();
+                    //Then, run Eades' algorithm
+                    layout.algo.ForceDirectedAlgorithm nodeEdges = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01) {
+                        public void calculateVectors() {
+                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 100, 100, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
+                        }
+                    };
+          			
+                    LayoutUtilities.applyLayout(view.getGraph(), new OrganicLayout());
+                    
+                    nodeEdges.run();
+
+                    finishTime = System.currentTimeMillis();
+                    
+                    ioh.write(view.getGraph(), outputDirectoryNodeEdge + children[i]);
+                    
+                    nodeEdgeAngular = util.Utilities.calculateAngularResolution(view);
+                    nodeEdgeCrossing = util.Utilities.calculateCrossingResolution(view);
+                    nodeEdgeEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
+                    nodeEdgeNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
+                    nodeEdgeIterations = eades.getMaxNoOfIterations();
+                    nodeEdgeTime = (finishTime - startTime);
                    
                     java.lang.StringBuffer buffer = new java.lang.StringBuffer().append(children[i])
                                                                                 .append("\t")
-                                                                                //.append(view.getGraph2D().nodeCount())
                                                                                 .append(view.getGraph().getNodes().size())
                                                                                 .append("\t")
-                                                                                //.append(view.getGraph2D().edgeCount())
                                                                                 .append(view.getGraph().getEdges().size())
                                                                                 .append("\t")
                                                                                 .append(maxDegree)
@@ -166,10 +229,31 @@ public class Experiment
                                                                                 .append(eadesNoOfCrossings)
                                                                                 .append("\t")
                                                                                 .append(df.format(eadesTime).replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append("\t")
+                                                                                .append(children[i])
+                                                                                .append("\t")
+                                                                                .append(view.getGraph().getNodes().size())
+                                                                                .append("\t")
+                                                                                .append(view.getGraph().getEdges().size())
+                                                                                .append("\t")
+                                                                                .append(maxDegree)
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeAngular).replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeCrossing).replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(nodeEdgeIterations)
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeEdgeLength).replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(nodeEdgeNoOfCrossings)
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeTime).replace(',', '.'))
                                                                                 .append("\n");
 
                    
-                    fstream = new java.io.FileWriter(csv, true);
+                    fstream = new java.io.FileWriter(txt, true);
                     out = new java.io.BufferedWriter(fstream);
                     out.write(buffer.toString());
                     out.close();

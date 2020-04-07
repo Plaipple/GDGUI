@@ -977,7 +977,8 @@ public class MainFrame extends JFrame {
             public void calculateVectors() {
                // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, threshold, map);
                // ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
-                ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
+               // ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
+                ForceDirectedFactory.simulatedAnnealing(graph, 150, maxNoOfIterations);
             }
         };
         fd.addAlgorithmListener(new AlgorithmListener() {

@@ -32,8 +32,8 @@ public class Utilities {
         //for (INodeCursor nc = graph.getGraph(); nc.ok(); nc.next()) 
         for (INode n : graph.getGraph().getNodes())
         {
-        	n.getLayout().toRectD().x = r.nextInt((int)graph.getViewport().getWidth());
-        	n.getLayout().toRectD().y = r.nextInt((int)graph.getViewport().getHeight());
+        	graph.getGraph().setNodeCenter(n, new PointD(r.nextInt((int)graph.getViewport().getWidth()), r.nextInt((int)graph.getViewport().getHeight())));
+        	
             //graph.getGraph().createNode(new PointD(r.nextInt((int)graph.getViewport().getWidth()), r.nextInt((int)graph.getViewport().getHeight())));
         }
     }
@@ -69,13 +69,16 @@ public class Utilities {
     public static int maxDegree(GraphComponent graph)
     {
         int maxDegree = -1;
+        int countedges;
         for (INode n : graph.getGraph().getNodes())
         {
+        	countedges = 0;
         	IListEnumerable<IPort> nPorts = n.getPorts();
         	for (IPort p : nPorts)
             {
-        		maxDegree = Math.max(maxDegree, graph.getGraph().edgesAt(p, AdjacencyTypes.ALL).size());
+        		countedges += graph.getGraph().edgesAt(p, AdjacencyTypes.ALL).size();
             }
+    		maxDegree = Math.max(maxDegree, countedges);
         }
         return maxDegree;
     }
@@ -100,7 +103,7 @@ public class Utilities {
 
             if (edgeList.size()==1) continue;
 
-            edgeList.sort(new util.CyclicEdgeComparator(view));
+            edgeList.sort(new util.CyclicEdgeComparator(view.getGraph()));
 
             for (int i = 0; i < edgeList.size(); i++)
             {
@@ -140,6 +143,11 @@ public class Utilities {
             YPoint p_u2 = new YPoint(view.getRealizer(u2).getCenterX(), view.getRealizer(u2).getCenterY());
             */
 
+        	INode source = e.getSourceNode();
+        	INode target = e.getTargetNode();
+        	double centerx = source.getLayout().getCenter().x;
+        	double targety = target.getLayout().getCenter().y;
+        	
         	LineSegment ls = new LineSegment(new YPoint(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
         								 	 new YPoint(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y));
         	

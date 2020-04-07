@@ -173,9 +173,7 @@ public class ForceDirectedFactory {
                 //The scale formula for the electric forces is only applied to nodes which
                 //are inside one of the two rectangles that were created above
                 if (rec1.contains(u_x, u_y) || rec2.contains(u_x, u_y))
-            	{
-            		//System.out.println("inside");
-            		
+            	{            		
             		YVector temp;
             		
             		//Set up the new vector for the force in one of the two directions
@@ -209,5 +207,92 @@ public class ForceDirectedFactory {
             map.getValue(z_u).addAll(vectors_edge);
             map.getValue(z_v).addAll(vectors_edge);
     	}
+    }
+    
+    static int temperature;
+    static int index = 0;
+    
+    public static void simulatedAnnealing (IGraph graph, double approx, int iterations)
+    {
+    	temperature = iterations - index;
+    	
+    	for (IEdge z : graph.getEdges())
+    	{
+    		INode z_u = z.getSourceNode();
+    		INode z_v = z.getTargetNode();
+
+    		double z_u_x = z_u.getLayout().getCenter().x;
+    		double z_u_y = z_u.getLayout().getCenter().y;
+    		YPoint p_z_u = new YPoint(z_u_x, z_u_y);
+    		PointD p_z_u_d = new PointD(z_u_x, z_u_y);
+
+    		double z_v_x = z_v.getLayout().getCenter().x;
+    		double z_v_y = z_v.getLayout().getCenter().y;
+    		YPoint p_z_v = new YPoint(z_v_x, z_v_y);
+    		PointD p_z_v_d = new PointD(z_v_x, z_v_y);
+    		
+    		//Creating the direction-vectors for the rectangles that are used to check, 
+    		//if the nodes are in the specific area at which the algorithm should be executed
+    		YVector z_vec1 = new YVector(p_z_u, p_z_v);
+    		z_vec1 = YVector.orthoNormal(z_vec1);
+    		YVector z_vec2 = new YVector(z_vec1.rotate(Math.PI));
+    		z_vec2.norm();
+    		
+    		//Creating the dimension for the two rectangles
+    		//the width is always the length of the edge and the height is ten times the edge.    		
+    		YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
+        	
+    		//The Orientation of the rectangles is that they are always positioned so that the short 
+    		//side (width) is the edge and the height is orthogonal to the edge on both sides
+        	YOrientedRectangle rec1 = new YOrientedRectangle(p_z_u, dim, z_vec1);
+        	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
+    		
+    		for (INode u : graph.getNodes())
+    		{
+    			//If the iterated node is one of the edges target/source nodes, then 
+    			//don't consider that vertex
+    			if (u == z_u || u == z_v )
+            	{
+            		continue;
+            	}
+    			
+    			double u_x = u.getLayout().getCenter().x;
+                double u_y = u.getLayout().getCenter().y;
+    			
+                PointD p_u_d = new PointD(u_x, u_y);
+                
+                //if (rec1.contains(u_x, u_y) || rec2.contains(u_x, u_y))
+                //{
+                	double formerdist = Math.abs(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d) - approx);
+                	
+                	int signx = (Math.random() > 0.5) ? -1 : 1;
+                	int signy = (Math.random() > 0.5) ? -1 : 1;
+                	double newposx = Math.random() * 200 * signx;
+                	double newposy = Math.random() * 200 * signy;
+                	PointD p_u_d_new = new PointD((p_u_d.x + newposx), (p_u_d.y + newposy));
+                	
+                	double newdist = Math.abs(p_u_d_new.distanceToSegment(p_z_u_d, p_z_v_d) - approx);                	                
+                	                	
+                	if (newdist < formerdist)
+                	{
+                		graph.setNodeCenter(u, p_u_d_new);
+                	}
+                	else
+                	{
+                		//double probability = Math.exp(((newdist - formerdist) / (temperature)) * -1);
+                		double probability = Math.abs(((newdist - formerdist) / newdist) - 1) * (((double) temperature) / ((double) iterations));
+                		System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
+                		System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
+                		System.out.println(probability);
+                		if (Math.random() <= probability)
+                		{
+                			graph.setNodeCenter(u, p_u_d_new);
+                		}
+                	}                	
+                //}
+    		}
+    	}    	
+    	index ++;
+    	if (temperature <= 0) index = 0;
     }
 }
