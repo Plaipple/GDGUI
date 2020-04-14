@@ -65,6 +65,8 @@ public class Experiment
                                                                         .append("\t")
                                                                         .append("Eades Crossings")
                                                                         .append("\t")
+                                                                        .append("Eades Distance")
+                                                                        .append("\t")
                                                                         .append("Eades Time")
                                                                         .append("\t")
                                                                         .append("\t")
@@ -85,6 +87,8 @@ public class Experiment
                                                                         .append("NodeEdge Edge Length")
                                                                         .append("\t")
                                                                         .append("NodeEdge Crossings")
+                                                                        .append("\t")
+                                                                        .append("NodeEdge Distance")
                                                                         .append("\t")
                                                                         .append("NodeEdge Time")
                                                                         .append("\n");
@@ -122,6 +126,7 @@ public class Experiment
                 double eadesAngular = 0;
                 double eadesCrossing = 0;
                 double eadesEdgeLength = 0.0;
+                double eadesDistance = 0.0;
                 int eadesNoOfCrossings = 0;
                 int eadesIterations = 0;
                 long eadesTime = 0;
@@ -129,6 +134,7 @@ public class Experiment
                 double nodeEdgeAngular = 0;
                 double nodeEdgeCrossing = 0;
                 double nodeEdgeEdgeLength = 0.0;
+                double nodeEdgeDistance = 0.0;
                 int nodeEdgeNoOfCrossings = 0;
                 int nodeEdgeIterations = 0;
                 long nodeEdgeTime = 0;
@@ -178,6 +184,7 @@ public class Experiment
                     eadesCrossing = util.Utilities.calculateCrossingResolution(view);
                     eadesEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
                     eadesNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
+                    eadesDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     eadesIterations = eades.getMaxNoOfIterations();
                     eadesTime = (finishTime - startTime);
                     
@@ -207,6 +214,7 @@ public class Experiment
                     nodeEdgeCrossing = util.Utilities.calculateCrossingResolution(view);
                     nodeEdgeEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
                     nodeEdgeNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
+                    nodeEdgeDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     nodeEdgeIterations = eades.getMaxNoOfIterations();
                     nodeEdgeTime = (finishTime - startTime);
                    
@@ -228,6 +236,8 @@ public class Experiment
                                                                                 .append("\t")
                                                                                 .append(eadesNoOfCrossings)
                                                                                 .append("\t")
+                                                                                .append(df.format(eadesDistance).replace(',', '.'))
+                                                                                .append("\t")
                                                                                 .append(df.format(eadesTime).replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append("\t")
@@ -248,6 +258,8 @@ public class Experiment
                                                                                 .append(df.format(nodeEdgeEdgeLength).replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(nodeEdgeNoOfCrossings)
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeDistance).replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(df.format(nodeEdgeTime).replace(',', '.'))
                                                                                 .append("\n");

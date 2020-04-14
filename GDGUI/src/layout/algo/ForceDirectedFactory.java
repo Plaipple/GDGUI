@@ -281,8 +281,8 @@ public class ForceDirectedFactory {
                 	{
                 		//double probability = Math.exp(((newdist - formerdist) / (temperature)) * -1);
                 		double probability = Math.abs(((newdist - formerdist) / newdist) - 1) * (((double) temperature) / ((double) iterations));
-                		System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
-                		System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
+                		//System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
+                		//System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
                 		System.out.println(probability);
                 		if (Math.random() <= probability)
                 		{

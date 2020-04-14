@@ -267,5 +267,22 @@ public class Utilities {
         }
         return 180*angle/Math.PI;
     }
+    
+    public static double calculateshortestNodeEdgeDistance(GraphComponent view)
+    {
+    	double shortestDistance = Double.POSITIVE_INFINITY;
+    	for (INode n : view.getGraph().getNodes())
+    	{
+    		PointD node = new PointD(n.getLayout().getX(), n.getLayout().getY());
+    		for (IEdge e : view.getGraph().getEdges())
+    		{
+    			if (n == e.getSourceNode() || n == e.getTargetNode()) continue;
+    			shortestDistance = Math.min(node.distanceToSegment(new PointD(e.getSourceNode().getLayout().getX(), e.getSourceNode().getLayout().getY()),
+    															   new PointD(e.getTargetNode().getLayout().getX(), e.getTargetNode().getLayout().getY())), 
+    										shortestDistance);
+    		}
+    	}
+    	return shortestDistance;
+    }
 
 }
