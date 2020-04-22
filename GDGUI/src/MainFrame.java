@@ -114,8 +114,8 @@ public class MainFrame extends JFrame {
         this.progressBar = new JProgressBar();
         this.progressBar.setPreferredSize(new Dimension(250, 20));
         this.progressBar.setStringPainted(true);
-        progressBarPanel.add(this.progressBar);
-
+        progressBarPanel.add(this.progressBar);        
+        
         JPanel mainPanel = new JPanel();
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         mainPanel.setPreferredSize(new Dimension(300, 300));
@@ -202,7 +202,9 @@ public class MainFrame extends JFrame {
 
         JPanel toolBar = this.initToolBar();
         mainPanel.add(toolBar, BorderLayout.PAGE_START);
-
+        
+        mainPanel.add(this.initTabPanel(), BorderLayout.EAST);
+        
         this.defaultLayouter = new OrganicLayout();
         this.defaultLayouter.setPreferredEdgeLength(100);
         this.defaultLayouter.setMinimumNodeDistance(100);
@@ -833,6 +835,244 @@ public class MainFrame extends JFrame {
         mainMenuBar.add(layoutMenu);
         super.setJMenuBar(mainMenuBar);
     }
+    
+    private JTabbedPane initTabPanel()
+    {        
+    	               
+    	JPanel repulsion = new JPanel();
+
+        JLabel iterationsLabel = new JLabel("Iterations:");
+        JLabel repulsionLabel = new JLabel("Repulsion Value:");
+        JLabel thresholdLabel = new JLabel("Threshold:");
+        JLabel springStiffnessLabel = new JLabel("Spring Stiffness:");
+        JLabel naturalSpringLengthLabel = new JLabel("Natural Spring Length:");
+        JLabel checkSpringsLabel = new JLabel("Use Springs:");
+        JLabel checkRepulsionLabel = new JLabel("Vertex-Vertex Repulsion:");
+        JLabel checkEVRepulsionLabel = new JLabel("Edge-Vertex Repulsion:");
+        JLabel nextLineLabel = new JLabel(" ");
+        JLabel skipLineLabel = new JLabel(" ");
+        JTextField iterationsTextField = new JTextField("1000", 8);
+        JTextField repulsionTextField = new JTextField("50000", 8);
+        JTextField thresholdTextField = new JTextField("0.01", 8);
+        JTextField springStiffTextField = new JTextField("150", 8);
+        JTextField natSpringLengthTextField = new JTextField("100", 8);
+        JCheckBox checkSpringRepulsion = new JCheckBox();
+        checkSpringRepulsion.setSelected(true);
+        JCheckBox checkRepulsion = new JCheckBox();
+        checkRepulsion.setSelected(true);
+        JCheckBox checkEVRepulsion = new JCheckBox();
+        checkEVRepulsion.setSelected(true);
+        JButton executeRepulsion = new JButton("Execute");
+    	
+        repulsion.setLayout(new GridBagLayout());
+        repulsion.setPreferredSize(new Dimension(250, 300));
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.PAGE_START;
+        constraints.insets = new Insets(10, 10, 10, 10);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 0;     
+        repulsion.add(checkSpringsLabel, constraints);
+
+        constraints.gridx = 1;
+        repulsion.add(checkSpringRepulsion, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 1;     
+        repulsion.add(springStiffnessLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(springStiffTextField, constraints);      
+        
+        constraints.gridx = 0;
+        constraints.gridy = 2;
+        repulsion.add(naturalSpringLengthLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(natSpringLengthTextField, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 3;
+        repulsion.add(skipLineLabel, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 4;
+        repulsion.add(checkRepulsionLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(checkRepulsion, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 5;
+        repulsion.add(checkEVRepulsionLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(checkEVRepulsion, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 6;
+        repulsion.add(repulsionLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(repulsionTextField, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 7;
+        repulsion.add(nextLineLabel, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 8;
+        repulsion.add(thresholdLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(thresholdTextField, constraints);        
+        
+        constraints.gridx = 0;
+        constraints.gridy = 9;
+        repulsion.add(iterationsLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(iterationsTextField, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 10;
+        repulsion.add(executeRepulsion, constraints);
+        
+        executeRepulsion.addActionListener(new java.awt.event.ActionListener() 
+        {
+        	public void actionPerformed(ActionEvent evt) 
+        	{
+        		int iterations = 1000;
+                double electricrepulsion = 50000;
+                double threshold = 0.01;
+                double springstiffness = 150.0;
+                double naturalspringlength = 100.0;
+        		
+        		try
+        		{
+                    iterations = Integer.parseInt(iterationsTextField.getText());
+                    electricrepulsion = Double.parseDouble(repulsionTextField.getText());
+                    threshold = Double.parseDouble(thresholdTextField.getText());
+                    springstiffness = Double.parseDouble(springStiffTextField.getText());
+                    naturalspringlength = Double.parseDouble(natSpringLengthTextField.getText());
+                } 
+        		catch (NumberFormatException exc) 
+        		{
+                    JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+                }
+        		
+        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, springstiffness, naturalspringlength)
+       		 	{
+       	            public void calculateVectors()
+       	            {
+       	                if (checkSpringRepulsion.isSelected()) ForceDirectedFactory.calculateSpringForcesEades(graph, springstiffness, naturalspringlength, threshold, map);
+       	                if (checkRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
+       	                if (checkEVRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);        	            
+       	            }
+       		 	};
+       		 	
+       		    fd.addAlgorithmListener(new AlgorithmListener()
+       		    {
+       		    	public void algorithmStarted(AlgorithmEvent evt) {
+       		    	}
+
+       		    	public void algorithmFinished(AlgorithmEvent evt) {
+       		    		progressBar.setValue(0);
+       		    		view.fitContent();
+       		    		view.updateUI();
+       		    	}
+
+       		    	public void algorithmStateChanged(AlgorithmEvent evt) {
+       		    		progressBar.setValue(evt.currentStatus());
+       		    	}
+       		    });
+       		    Thread thread = new Thread(fd);
+       		    thread.start();
+       		    //this.view.updateUI();
+       		    view.updateUI();
+        	}
+        });
+        
+        JPanel simAnneal = new JPanel();
+        
+        JButton executeSimAnneal = new JButton("Execute");
+        
+        simAnneal.setLayout(new GridBagLayout());
+        simAnneal.setPreferredSize(new Dimension(250, 300));
+        GridBagConstraints annealConstraints = new GridBagConstraints();
+        annealConstraints.anchor = GridBagConstraints.PAGE_START;
+        annealConstraints.insets = new Insets(10, 10, 10, 10);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 0;
+        simAnneal.add(iterationsLabel);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(iterationsTextField);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 1;
+        simAnneal.add(executeSimAnneal, annealConstraints);
+        
+        executeSimAnneal.addActionListener(new java.awt.event.ActionListener() 
+        {
+        	public void actionPerformed(ActionEvent evt) 
+        	{
+        		int iterations = 1000;
+        		
+        		try
+        		{
+                    iterations = Integer.parseInt(iterationsTextField.getText());
+        		}
+        		catch (NumberFormatException exc)
+        		{
+        			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+        		}
+        		
+        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, 50000, 0.01, 150.0, 100.0)
+       		 	{
+       	            public void calculateVectors()
+       	            {
+       	                ForceDirectedFactory.simulatedAnnealing(graph, 150.0, 300.0, 200.0, maxNoOfIterations);       	            
+       	            }
+       		 	};
+       		 	
+       		 	fd.addAlgorithmListener(new AlgorithmListener()
+       		 		{
+       		 			public void algorithmStarted(AlgorithmEvent evt) {
+    		    	}
+
+    		    	public void algorithmFinished(AlgorithmEvent evt) 
+    		    	{
+    		    		progressBar.setValue(0);
+    		    		view.fitContent();
+    		    		view.updateUI();
+    		    	}
+
+    		    	public void algorithmStateChanged(AlgorithmEvent evt) 
+    		    	{
+    		    		progressBar.setValue(evt.currentStatus());
+    		    	}
+    		    });
+    		    Thread thread = new Thread(fd);
+    		    thread.start();
+    		    //this.view.updateUI();
+    		    view.updateUI();
+        	}
+        });	
+        
+        
+        JPanel random = new JPanel();
+        random.setPreferredSize(new Dimension(250, 300));
+        random.setLayout(new BorderLayout());
+        
+        JTabbedPane tabpane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabpane.addTab("Repulsion", repulsion);
+        tabpane.addTab("Simul. Anneal.", simAnneal);
+        tabpane.addTab("Random", random);
+        
+    	return tabpane;
+    }
 
 
     /*********************************************************************
@@ -973,12 +1213,12 @@ public class MainFrame extends JFrame {
             }
         }
 
-        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold) {
+        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, 150, 100) {
             public void calculateVectors() {
                // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, threshold, map);
                // ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
                // ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
-                ForceDirectedFactory.simulatedAnnealing(graph, 150, maxNoOfIterations);
+                ForceDirectedFactory.simulatedAnnealing(graph, 150, 150, 125, maxNoOfIterations);
             }
         };
         fd.addAlgorithmListener(new AlgorithmListener() {

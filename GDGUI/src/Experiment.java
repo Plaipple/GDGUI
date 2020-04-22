@@ -164,9 +164,9 @@ public class Experiment
                     startTime = System.currentTimeMillis();
 
                     //Then, run Eades' algorithm
-                    layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01) {
+                    layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01, 150, 100) {
                         public void calculateVectors() {
-                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 100, 100, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
                             //layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
                         }
@@ -194,9 +194,9 @@ public class Experiment
                     view.requestFocus();
                     startTime = System.currentTimeMillis();
                     //Then, run Eades' algorithm
-                    layout.algo.ForceDirectedAlgorithm nodeEdges = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01) {
+                    layout.algo.ForceDirectedAlgorithm nodeEdges = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01, 150, 100) {
                         public void calculateVectors() {
-                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 100, 100, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
                         }

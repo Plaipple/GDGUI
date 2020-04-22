@@ -35,6 +35,8 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
     protected int maxNoOfIterations;                //The maximum number of iterations.
     protected double electricrepulsion;
     protected double threshold;
+    protected double springstiffness;
+    protected double naturalspringlength;
     protected static List<ICanvasObject> canvasObjects = new ArrayList<>();
 
     //Graph Listeners.
@@ -46,13 +48,15 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      * @param view - an object of type Graph2DView
      * @param maxNoOfIterations - the maximum number of iterations
      */
-    public ForceDirectedAlgorithm(GraphComponent view, int maxNoOfIterations, double electricrepulsion, double threshold)
+    public ForceDirectedAlgorithm(GraphComponent view, int maxNoOfIterations, double electricrepulsion, double threshold, double springstiffness, double naturalspringlength)
     {
         this.view = view;
         this.graph = view.getGraph();
         this.maxNoOfIterations = maxNoOfIterations;
         this.electricrepulsion = electricrepulsion;
         this.threshold = threshold;
+        this.springstiffness = springstiffness;
+        this.naturalspringlength = naturalspringlength;
         this.algorithmListeners = new ArrayList<AlgorithmListener>();
     }
 

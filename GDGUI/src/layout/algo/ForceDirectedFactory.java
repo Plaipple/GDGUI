@@ -6,11 +6,14 @@ import com.yworks.yfiles.algorithms.YOrientedRectangle;
 import com.yworks.yfiles.algorithms.YPoint;
 import com.yworks.yfiles.algorithms.YVector;
 import com.yworks.yfiles.geometry.PointD;
+import com.yworks.yfiles.graph.AdjacencyTypes;
 import com.yworks.yfiles.graph.IEdge;
 import com.yworks.yfiles.graph.IGraph;
 import com.yworks.yfiles.graph.IMapper;
 import com.yworks.yfiles.graph.INode;
+import com.yworks.yfiles.graph.IPort;
 import com.yworks.yfiles.layout.YGraphAdapter;
+import com.yworks.yfiles.utils.IListEnumerable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -212,86 +215,149 @@ public class ForceDirectedFactory {
     static int temperature;
     static int index = 0;
     
-    public static void simulatedAnnealing (IGraph graph, double approx, int iterations)
+    public static void simulatedAnnealing (IGraph graph, double approxNodeNode, double approxNodeEdge, double approxEdgeDist, int iterations)
     {
     	temperature = iterations - index;
-    	
-    	for (IEdge z : graph.getEdges())
-    	{
-    		INode z_u = z.getSourceNode();
-    		INode z_v = z.getTargetNode();
-
-    		double z_u_x = z_u.getLayout().getCenter().x;
-    		double z_u_y = z_u.getLayout().getCenter().y;
-    		YPoint p_z_u = new YPoint(z_u_x, z_u_y);
-    		PointD p_z_u_d = new PointD(z_u_x, z_u_y);
-
-    		double z_v_x = z_v.getLayout().getCenter().x;
-    		double z_v_y = z_v.getLayout().getCenter().y;
-    		YPoint p_z_v = new YPoint(z_v_x, z_v_y);
-    		PointD p_z_v_d = new PointD(z_v_x, z_v_y);
-    		
-    		//Creating the direction-vectors for the rectangles that are used to check, 
-    		//if the nodes are in the specific area at which the algorithm should be executed
-    		YVector z_vec1 = new YVector(p_z_u, p_z_v);
-    		z_vec1 = YVector.orthoNormal(z_vec1);
-    		YVector z_vec2 = new YVector(z_vec1.rotate(Math.PI));
-    		z_vec2.norm();
-    		
-    		//Creating the dimension for the two rectangles
-    		//the width is always the length of the edge and the height is ten times the edge.    		
-    		YDimension dim = new YDimension(YPoint.distance(p_z_u, p_z_v), YPoint.distance(p_z_u, p_z_v) * 10);
+    	for (INode n : graph.getNodes())
+    	{   
+    		//if (n != graph.getNodes().first()) continue;
+        	double newShortestNodeNodeDist = Double.POSITIVE_INFINITY;
+        	double newShortestNodeEdgeDist = Double.POSITIVE_INFINITY;
+        	double newAverageEdgeDist = 0;
+        	double shortestNodeNodeDist = Double.POSITIVE_INFINITY;
+        	double shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
+        	double averageEdgeDist = 0;
+        	double cumulativeEdgeDist = 0;
+        	int countedges = 0;
+        	double bound_top = Double.POSITIVE_INFINITY;
+        	double bound_bottom = Double.NEGATIVE_INFINITY;
+        	double bound_left = Double.POSITIVE_INFINITY;
+        	double bound_right = Double.NEGATIVE_INFINITY;
         	
-    		//The Orientation of the rectangles is that they are always positioned so that the short 
-    		//side (width) is the edge and the height is orthogonal to the edge on both sides
-        	YOrientedRectangle rec1 = new YOrientedRectangle(p_z_u, dim, z_vec1);
-        	YOrientedRectangle rec2 = new YOrientedRectangle(p_z_v, dim, z_vec2);
-    		
+        	// Calculate the shortest Distance between this node and any other node in the graph
     		for (INode u : graph.getNodes())
     		{
-    			//If the iterated node is one of the edges target/source nodes, then 
-    			//don't consider that vertex
-    			if (u == z_u || u == z_v )
-            	{
-            		continue;
-            	}
+    			bound_top = Math.min(n.getLayout().getCenter().y, bound_top);
+    			bound_bottom = Math.max(n.getLayout().getCenter().y, bound_bottom);
+    			bound_left = Math.min(n.getLayout().getCenter().x, bound_left);
+    			bound_right = Math.max(n.getLayout().getCenter().x, bound_right);
     			
-    			double u_x = u.getLayout().getCenter().x;
-                double u_y = u.getLayout().getCenter().y;
+    			if (u == n) continue;
+    			PointD p_u = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);
+    			PointD p_n = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
     			
-                PointD p_u_d = new PointD(u_x, u_y);
-                
-                //if (rec1.contains(u_x, u_y) || rec2.contains(u_x, u_y))
-                //{
-                	double formerdist = Math.abs(p_u_d.distanceToSegment(p_z_u_d, p_z_v_d) - approx);
-                	
-                	int signx = (Math.random() > 0.5) ? -1 : 1;
-                	int signy = (Math.random() > 0.5) ? -1 : 1;
-                	double newposx = Math.random() * 200 * signx;
-                	double newposy = Math.random() * 200 * signy;
-                	PointD p_u_d_new = new PointD((p_u_d.x + newposx), (p_u_d.y + newposy));
-                	
-                	double newdist = Math.abs(p_u_d_new.distanceToSegment(p_z_u_d, p_z_v_d) - approx);                	                
-                	                	
-                	if (newdist < formerdist)
-                	{
-                		graph.setNodeCenter(u, p_u_d_new);
-                	}
-                	else
-                	{
-                		//double probability = Math.exp(((newdist - formerdist) / (temperature)) * -1);
-                		double probability = Math.abs(((newdist - formerdist) / newdist) - 1) * (((double) temperature) / ((double) iterations));
-                		//System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
-                		//System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
-                		System.out.println(probability);
-                		if (Math.random() <= probability)
-                		{
-                			graph.setNodeCenter(u, p_u_d_new);
-                		}
-                	}                	
-                //}
+    			shortestNodeNodeDist = Math.min(p_u.distanceTo(p_n), shortestNodeNodeDist);
+    			
+    			bound_top = Math.min(u.getLayout().getCenter().y, bound_top);
+    			bound_bottom = Math.max(u.getLayout().getCenter().y, bound_bottom);
+    			bound_left = Math.min(u.getLayout().getCenter().x, bound_left);
+    			bound_right = Math.max(u.getLayout().getCenter().x, bound_right);
     		}
-    	}    	
+    		
+    		// Calculating the shortest Distance between this node and any other Edge in the graph
+    		for (IEdge e : graph.getEdges())
+    		{
+    			if (e.getSourceNode() == n || e.getTargetNode() == n) continue;
+    			shortestNodeEdgeDist = Math.min(new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y).
+    											distanceToSegment(new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
+    													          new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y)),
+    											shortestNodeEdgeDist);
+    		}
+    		
+    		// Calculating the average Edge Length of all Edges that are connected to this node
+    		IListEnumerable<IPort> nPorts = n.getPorts();
+    		for (IPort p : nPorts)
+    		{
+    			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
+    			{
+    				PointD e_adj_s = new PointD(e_adj.getSourceNode().getLayout().getCenter().x, e_adj.getSourceNode().getLayout().getCenter().y);
+    				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
+    				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
+    				countedges ++;
+    			}
+    		}
+    		if (countedges != 0) averageEdgeDist = cumulativeEdgeDist / countedges;
+    		
+        	cumulativeEdgeDist = 0;
+        	countedges = 0;
+    		
+        	
+        	//Creating randomized coordinates for the new position within 200 units distance in any direction
+        	int signx = (Math.random() > 0.5) ? -1 : 1;
+        	int signy = (Math.random() > 0.5) ? -1 : 1;
+        	double newposx = Math.random() * 200 * signx;
+        	double newposy = Math.random() * 200 * signy;
+        	PointD n_new = new PointD((n.getLayout().getCenter().x + newposx), (n.getLayout().getCenter().y + newposy));
+        	
+        	/// Now the same procedure is executed for the new Point        	
+        	for (INode u : graph.getNodes())
+    		{
+    			if (u == n) continue;
+    			PointD p_u = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);    			
+    			
+    			newShortestNodeNodeDist = Math.min(p_u.distanceTo(n_new), newShortestNodeNodeDist);
+    		}
+        	
+        	for (IEdge e : graph.getEdges())
+    		{
+    			if (e.getSourceNode() == n || e.getTargetNode() == n) continue;
+    			shortestNodeEdgeDist = Math.min(n_new.distanceToSegment(new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
+    													                new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y)),
+    											shortestNodeEdgeDist);
+    		}
+        	
+    		for (IPort p : nPorts)
+    		{
+    			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
+    			{
+    				PointD e_adj_s = n_new;
+    				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
+    				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
+    				countedges ++;
+    			}
+    		}
+    		if (countedges != 0) newAverageEdgeDist = cumulativeEdgeDist / countedges;
+    		
+    		if (n_new.y > (bound_bottom+20) || n_new.y < (bound_top-20) || n_new.x > (bound_right+20) || n_new.x < (bound_left-20)) continue;
+    		
+        	if (shortestNodeNodeDist == Double.POSITIVE_INFINITY || newShortestNodeNodeDist == Double.POSITIVE_INFINITY)
+        	{
+        		shortestNodeNodeDist = approxNodeNode;
+        		newShortestNodeNodeDist = approxNodeNode;
+        	}
+        	if (shortestNodeEdgeDist == Double.POSITIVE_INFINITY || newShortestNodeEdgeDist == Double.POSITIVE_INFINITY)
+        	{
+        		 shortestNodeEdgeDist = approxNodeEdge;
+        		 newShortestNodeEdgeDist = approxNodeEdge;
+        	}
+        	shortestNodeNodeDist = Math.abs(approxNodeNode - shortestNodeNodeDist);
+        	shortestNodeEdgeDist = Math.abs(approxNodeEdge - shortestNodeEdgeDist);
+        	averageEdgeDist = Math.abs(approxEdgeDist - averageEdgeDist);
+        	double nodeValue = shortestNodeNodeDist + shortestNodeEdgeDist + averageEdgeDist;
+        	
+        	newShortestNodeNodeDist = Math.abs(approxNodeNode - newShortestNodeNodeDist);
+        	newShortestNodeEdgeDist = Math.abs(approxNodeEdge - newShortestNodeEdgeDist);
+        	newAverageEdgeDist = Math.abs(approxEdgeDist - newAverageEdgeDist);
+        	double newNodeValue = newShortestNodeNodeDist/3 + newShortestNodeEdgeDist/2 + newAverageEdgeDist;
+        	
+        	if (newNodeValue < nodeValue)
+        	{
+        		graph.setNodeCenter(n, n_new);
+        	}
+        	else
+        	{
+        		//double probability = Math.exp(((newdist - formerdist) / (temperature)) * -1);
+        		double probability = Math.abs(((newNodeValue - nodeValue) / newNodeValue) - 1) * (((double) temperature) / ((double) iterations));
+        		//System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
+        		//System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
+        		System.out.println(probability);
+        		if (Math.random() <= probability)
+        		{
+        			graph.setNodeCenter(n, n_new);
+        		}
+        	}    		
+    	}
+    	   	
     	index ++;
     	if (temperature <= 0) index = 0;
     }
