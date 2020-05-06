@@ -214,73 +214,34 @@ public class ForceDirectedFactory {
     
     static int temperature;
     static int index = 0;
+    static double energyOld = 0;
+	static double boundThreshold = 10;
+	static double bound_top = Double.POSITIVE_INFINITY;
+	static double bound_bottom = Double.NEGATIVE_INFINITY;
+	static double bound_left = Double.POSITIVE_INFINITY;
+	static double bound_right = Double.NEGATIVE_INFINITY;
     
-    public static void simulatedAnnealing (IGraph graph, double approxNodeNode, double approxNodeEdge, double approxEdgeDist, int iterations)
+    public static void simulatedAnnealing (IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, int iterations)
     {
     	temperature = iterations - index;
+    	
+    	if (index == 0)
+    	{
+        	for (INode i : graph.getNodes())
+        	{
+        		bound_top = Math.min(i.getLayout().getCenter().y, bound_top);
+    			bound_bottom = Math.max(i.getLayout().getCenter().y, bound_bottom);
+    			bound_left = Math.min(i.getLayout().getCenter().x, bound_left);
+    			bound_right = Math.max(i.getLayout().getCenter().x, bound_right);
+        	}
+        	
+        	energyOld = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour);
+
+    	}
+    	
     	for (INode n : graph.getNodes())
     	{   
-    		//if (n != graph.getNodes().first()) continue;
-        	double newShortestNodeNodeDist = Double.POSITIVE_INFINITY;
-        	double newShortestNodeEdgeDist = Double.POSITIVE_INFINITY;
-        	double newAverageEdgeDist = 0;
-        	double shortestNodeNodeDist = Double.POSITIVE_INFINITY;
-        	double shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
-        	double averageEdgeDist = 0;
-        	double cumulativeEdgeDist = 0;
-        	int countedges = 0;
-        	double bound_top = Double.POSITIVE_INFINITY;
-        	double bound_bottom = Double.NEGATIVE_INFINITY;
-        	double bound_left = Double.POSITIVE_INFINITY;
-        	double bound_right = Double.NEGATIVE_INFINITY;
-        	
-        	// Calculate the shortest Distance between this node and any other node in the graph
-    		for (INode u : graph.getNodes())
-    		{
-    			bound_top = Math.min(n.getLayout().getCenter().y, bound_top);
-    			bound_bottom = Math.max(n.getLayout().getCenter().y, bound_bottom);
-    			bound_left = Math.min(n.getLayout().getCenter().x, bound_left);
-    			bound_right = Math.max(n.getLayout().getCenter().x, bound_right);
-    			
-    			if (u == n) continue;
-    			PointD p_u = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);
-    			PointD p_n = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
-    			
-    			shortestNodeNodeDist = Math.min(p_u.distanceTo(p_n), shortestNodeNodeDist);
-    			
-    			bound_top = Math.min(u.getLayout().getCenter().y, bound_top);
-    			bound_bottom = Math.max(u.getLayout().getCenter().y, bound_bottom);
-    			bound_left = Math.min(u.getLayout().getCenter().x, bound_left);
-    			bound_right = Math.max(u.getLayout().getCenter().x, bound_right);
-    		}
-    		
-    		// Calculating the shortest Distance between this node and any other Edge in the graph
-    		for (IEdge e : graph.getEdges())
-    		{
-    			if (e.getSourceNode() == n || e.getTargetNode() == n) continue;
-    			shortestNodeEdgeDist = Math.min(new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y).
-    											distanceToSegment(new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
-    													          new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y)),
-    											shortestNodeEdgeDist);
-    		}
-    		
-    		// Calculating the average Edge Length of all Edges that are connected to this node
-    		IListEnumerable<IPort> nPorts = n.getPorts();
-    		for (IPort p : nPorts)
-    		{
-    			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
-    			{
-    				PointD e_adj_s = new PointD(e_adj.getSourceNode().getLayout().getCenter().x, e_adj.getSourceNode().getLayout().getCenter().y);
-    				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
-    				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
-    				countedges ++;
-    			}
-    		}
-    		if (countedges != 0) averageEdgeDist = cumulativeEdgeDist / countedges;
-    		
-        	cumulativeEdgeDist = 0;
-        	countedges = 0;
-    		
+    		double energyNew = 0;   		
         	
         	//Creating randomized coordinates for the new position within 200 units distance in any direction
         	int signx = (Math.random() > 0.5) ? -1 : 1;
@@ -289,76 +250,152 @@ public class ForceDirectedFactory {
         	double newposy = Math.random() * 200 * signy;
         	PointD n_new = new PointD((n.getLayout().getCenter().x + newposx), (n.getLayout().getCenter().y + newposy));
         	
+        	if(n_new.x > bound_right - boundThreshold || n_new.x < bound_left + boundThreshold || n_new.y > bound_bottom - boundThreshold || n_new.y < bound_top + boundThreshold) continue;
+        	
+        	PointD n_old = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
+        	graph.setNodeCenter(n, n_new);
         	/// Now the same procedure is executed for the new Point        	
-        	for (INode u : graph.getNodes())
-    		{
-    			if (u == n) continue;
-    			PointD p_u = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);    			
-    			
-    			newShortestNodeNodeDist = Math.min(p_u.distanceTo(n_new), newShortestNodeNodeDist);
-    		}
+        	energyNew = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour);
         	
-        	for (IEdge e : graph.getEdges())
-    		{
-    			if (e.getSourceNode() == n || e.getTargetNode() == n) continue;
-    			shortestNodeEdgeDist = Math.min(n_new.distanceToSegment(new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
-    													                new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y)),
-    											shortestNodeEdgeDist);
-    		}
-        	
-    		for (IPort p : nPorts)
-    		{
-    			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
-    			{
-    				PointD e_adj_s = n_new;
-    				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
-    				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
-    				countedges ++;
-    			}
-    		}
-    		if (countedges != 0) newAverageEdgeDist = cumulativeEdgeDist / countedges;
-    		
-    		if (n_new.y > (bound_bottom+20) || n_new.y < (bound_top-20) || n_new.x > (bound_right+20) || n_new.x < (bound_left-20)) continue;
-    		
-        	if (shortestNodeNodeDist == Double.POSITIVE_INFINITY || newShortestNodeNodeDist == Double.POSITIVE_INFINITY)
+        	if (energyNew < energyOld)
         	{
-        		shortestNodeNodeDist = approxNodeNode;
-        		newShortestNodeNodeDist = approxNodeNode;
+        		energyOld = energyNew;
         	}
-        	if (shortestNodeEdgeDist == Double.POSITIVE_INFINITY || newShortestNodeEdgeDist == Double.POSITIVE_INFINITY)
+            else
         	{
-        		 shortestNodeEdgeDist = approxNodeEdge;
-        		 newShortestNodeEdgeDist = approxNodeEdge;
-        	}
-        	shortestNodeNodeDist = Math.abs(approxNodeNode - shortestNodeNodeDist);
-        	shortestNodeEdgeDist = Math.abs(approxNodeEdge - shortestNodeEdgeDist);
-        	averageEdgeDist = Math.abs(approxEdgeDist - averageEdgeDist);
-        	double nodeValue = shortestNodeNodeDist + shortestNodeEdgeDist + averageEdgeDist;
-        	
-        	newShortestNodeNodeDist = Math.abs(approxNodeNode - newShortestNodeNodeDist);
-        	newShortestNodeEdgeDist = Math.abs(approxNodeEdge - newShortestNodeEdgeDist);
-        	newAverageEdgeDist = Math.abs(approxEdgeDist - newAverageEdgeDist);
-        	double newNodeValue = newShortestNodeNodeDist/3 + newShortestNodeEdgeDist/2 + newAverageEdgeDist;
-        	
-        	if (newNodeValue < nodeValue)
-        	{
-        		graph.setNodeCenter(n, n_new);
-        	}
-        	else
-        	{
-        		//double probability = Math.exp(((newdist - formerdist) / (temperature)) * -1);
-        		double probability = Math.abs(((newNodeValue - nodeValue) / newNodeValue) - 1) * (((double) temperature) / ((double) iterations));
-        		//System.out.println("first factor: " + Math.abs(((newdist - formerdist) / newdist) - 1));
-        		//System.out.println("second factor: " + (((double) temperature) / ((double) iterations)));
+        		//double difference = energyOld - energyNew;
+        		double ratio = energyOld / energyNew * 0.1;
+        		//double probability = Math.exp((energyOld - energyNew)); // (double) temperature);#
+        	    double temperatureRatio = (double) temperature / (double) iterations;
+        		double probability = ratio * temperatureRatio;
+        		//probability = (probability - 1) * -1;
         		System.out.println(probability);
         		if (Math.random() <= probability)
         		{
-        			graph.setNodeCenter(n, n_new);
+        			energyOld = energyNew;
+        		}
+        		else
+        		{
+        			graph.setNodeCenter(n, n_old);
         		}
         	}    		
     	}
-    	   	
+    	
     	index ++;
     	if (temperature <= 0) index = 0;
+    }
+    
+    public static double calculateEnergyFunction(IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour)
+    {
+		double energy = 0;
+    	double shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
+    	double shortestNodeNodeDist = Double.POSITIVE_INFINITY;
+    	double energyNodeDistances = 0;
+    	double energyBorderlines = 0;
+    	double energyEdgeLengths = 0;
+    	double energyNodeEdgeDist = 0;
+    	
+    	//Distances between each pair of nodes
+    	for (INode u : graph.getNodes())
+    	{    		
+    		for (INode i : graph.getNodes())
+    		{
+        		if (i == u) continue;
+    			PointD p_u = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);
+    			PointD p_i = new PointD(i.getLayout().getCenter().x, i.getLayout().getCenter().y);
+    			
+    			//energy += lambdaOne / Math.pow(p_u.distanceTo(p_i), 2);
+    			shortestNodeNodeDist = Math.min(shortestNodeNodeDist, p_u.distanceTo(p_i));    			
+    		}
+    		energyNodeDistances += Math.abs(150 - shortestNodeNodeDist);
+    		shortestNodeNodeDist = Double.POSITIVE_INFINITY;
+    	}
+    	energyNodeDistances /= graph.getNodes().size();
+    	energyNodeDistances *= lambdaOne;
+    	energy += energyNodeDistances;
+		
+    	//Borderline Thresholds
+    	for (INode u : graph.getNodes())
+    	{
+    		PointD p_n = new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y);
+    		double right = bound_right + boundThreshold - p_n.x;
+    		double left = p_n.x - (bound_left - boundThreshold);
+    		double top = p_n.y - (bound_top - boundThreshold);
+    		double bottom = bound_bottom + boundThreshold - p_n.y;
+    		/*if (right  != 0) right = 1 / Math.pow(right, 2);
+    		if (left   != 0) left = 1 / Math.pow(left, 2);
+    		if (top    != 0) top = 1 / Math.pow(top, 2);
+    		if (bottom != 0) bottom = 1 / Math.pow(bottom, 2);*/    		
+    		//double formula = right + left + top + bottom;    	
+    		double xDistMid = Math.abs(((bound_right + boundThreshold) / 2) - p_n.x);
+    		double yDistMid = Math.abs(((bound_bottom + boundThreshold) / 2) - p_n.y);
+    		double formula = Math.abs(xDistMid / ((bound_right + boundThreshold) / 2)) + Math.abs(yDistMid / ((bound_bottom + boundThreshold) / 2));
+    		//formula = lambdaTwo * formula;
+    		//energy += formula;
+    		energyBorderlines += formula * 20;
+    	}
+    	energyBorderlines /= graph.getNodes().size();
+    	energyBorderlines *= lambdaTwo;
+    	energy += energyBorderlines;
+		
+		
+		/*IListEnumerable<IPort> nPorts = n.getPorts();
+		for (IPort p : nPorts)
+		{
+			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
+			{
+				PointD e_adj_s = new PointD(e_adj.getSourceNode().getLayout().getCenter().x, e_adj.getSourceNode().getLayout().getCenter().y);
+				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
+				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
+				countedges ++;
+			}
+		}
+		if (countedges != 0) averageEdgeDist = cumulativeEdgeDist / countedges;
+		
+    	cumulativeEdgeDist = 0;
+    	countedges = 0;*/
+		
+    	//Edge Lengths
+		for (IEdge e : graph.getEdges())
+		{
+			PointD e_s = new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y);
+			PointD e_t = new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y);
+			//energy += lambdaThree/(Math.pow(e_s.distanceTo(e_t), 2));
+			energyEdgeLengths += Math.abs(150 - e_s.distanceTo(e_t));
+		}
+		energyEdgeLengths /= graph.getEdges().size();
+		energyEdgeLengths *= lambdaThree;
+	    energy += energyEdgeLengths;
+		
+		//Node to Edge Distances
+		for (INode u : graph.getNodes())
+		{
+			for (IEdge e : graph.getEdges())
+    		{
+    			if (e.getSourceNode() == u || e.getTargetNode() == u) continue;
+    			shortestNodeEdgeDist = Math.min(new PointD(u.getLayout().getCenter().x, u.getLayout().getCenter().y).
+    											distanceToSegment(new PointD(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y), 
+    													          new PointD(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y)),
+    											shortestNodeEdgeDist);
+    		}
+			if (shortestNodeEdgeDist != Double.POSITIVE_INFINITY)
+			{
+				//energy += lambdaFour / (Math.pow(shortestNodeEdgeDist, 2));
+				if (Math.abs(150 - shortestNodeEdgeDist) < 50) 
+				{
+					energyNodeEdgeDist += Math.abs((150 - shortestNodeEdgeDist) * 3);
+				}
+				else
+				{
+					energyNodeEdgeDist += Math.abs(150 - shortestNodeEdgeDist);
+				}
+			}
+																	
+			shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
+		}
+		energyNodeEdgeDist /= graph.getNodes().size();
+		energyNodeEdgeDist *= lambdaFour;
+		energy += energyNodeEdgeDist;
+    	return energy;
     }
 }

@@ -284,5 +284,25 @@ public class Utilities {
     	}
     	return shortestDistance;
     }
+    
+    public static double calculateUsedArea(GraphComponent view)
+    {
+    	double bound_top = Double.POSITIVE_INFINITY;
+    	double bound_bottom = Double.NEGATIVE_INFINITY;
+    	double bound_left = Double.POSITIVE_INFINITY;
+    	double bound_right = Double.NEGATIVE_INFINITY;
+    	for (INode n : view.getGraph().getNodes())
+    	{
+    		bound_top = Math.min(n.getLayout().getCenter().y, bound_top);
+    		bound_bottom = Math.max(n.getLayout().getCenter().y, bound_bottom);
+    		bound_left = Math.min(n.getLayout().getCenter().x, bound_left);
+    		bound_right = Math.max(n.getLayout().getCenter().x, bound_right);
+    	}
+    	PointD top = new PointD(0, bound_top);
+    	PointD bottom = new PointD(0, bound_bottom);
+    	PointD left = new PointD(bound_left, 0);
+    	PointD right = new PointD(bound_right, 0);
+    	return top.distanceTo(bottom) * left.distanceTo(right);
+    }
 
 }

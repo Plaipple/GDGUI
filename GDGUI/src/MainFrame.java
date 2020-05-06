@@ -961,7 +961,7 @@ public class MainFrame extends JFrame {
                     JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
                 }
         		
-        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, springstiffness, naturalspringlength)
+        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, springstiffness, naturalspringlength, 0, 0, 0, 0)
        		 	{
        	            public void calculateVectors()
        	            {
@@ -994,46 +994,118 @@ public class MainFrame extends JFrame {
         });
         
         JPanel simAnneal = new JPanel();
+       
         
+        JLabel lambdaInfo = new JLabel("Importance of Op.");
+        JLabel lambdaInfoTwo = new JLabel("Must add up to 100");
+        JLabel lambdaOneLabel = new JLabel("Avg. Node-Pair Dist.:");
+        JLabel lambdaTwoLabel = new JLabel("Pos. towards Borders:");
+        JLabel lambdaThreeLabel = new JLabel("Avg. Edge Lengths:");
+        JLabel lambdaFourLabel = new JLabel("Avg. Node-Edge Dist.:");
+        JTextField lambdaOneTextField = new JTextField("30", 8);
+        JTextField lambdaTwoTextField = new JTextField("20", 8);
+        JTextField lambdaThreeTextField = new JTextField("30", 8);
+        JTextField lambdaFourTextField = new JTextField("20", 8);
+        JTextField iterationsPanelTwoTextField = new JTextField("1000", 8);
+        JLabel skipLine = new JLabel(" ");
         JButton executeSimAnneal = new JButton("Execute");
-        
+                
         simAnneal.setLayout(new GridBagLayout());
         simAnneal.setPreferredSize(new Dimension(250, 300));
         GridBagConstraints annealConstraints = new GridBagConstraints();
         annealConstraints.anchor = GridBagConstraints.PAGE_START;
         annealConstraints.insets = new Insets(10, 10, 10, 10);
+               
         
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 0;
-        simAnneal.add(iterationsLabel);
+        simAnneal.add(lambdaInfo, annealConstraints);
         
         annealConstraints.gridx = 1;
-        simAnneal.add(iterationsTextField);
+        simAnneal.add(lambdaInfoTwo, annealConstraints);
         
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 1;
-        simAnneal.add(executeSimAnneal, annealConstraints);
+        simAnneal.add(lambdaOneLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(lambdaOneTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 2;
+        simAnneal.add(lambdaTwoLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(lambdaTwoTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 3;
+        simAnneal.add(lambdaThreeLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(lambdaThreeTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 4;
+        simAnneal.add(lambdaFourLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(lambdaFourTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 5;
+        simAnneal.add(skipLine, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 6;
+        simAnneal.add(iterationsLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(iterationsPanelTwoTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 7;
+        simAnneal.add(executeSimAnneal, annealConstraints);       
+        
         
         executeSimAnneal.addActionListener(new java.awt.event.ActionListener() 
         {
         	public void actionPerformed(ActionEvent evt) 
         	{
         		int iterations = 1000;
+        		double lambdaOne = 30;
+        		double lambdaTwo = 20;
+        		double lambdaThree = 30;
+        		double lambdaFour = 20;
         		
         		try
         		{
-                    iterations = Integer.parseInt(iterationsTextField.getText());
-        		}
+                    iterations = Integer.parseInt(iterationsPanelTwoTextField.getText());
+                    lambdaOne = Double.parseDouble(lambdaOneTextField.getText());
+                    lambdaTwo = Double.parseDouble(lambdaTwoTextField.getText());
+                    lambdaThree = Double.parseDouble(lambdaThreeTextField.getText());
+                    lambdaFour = Double.parseDouble(lambdaFourTextField.getText());
+                } 
         		catch (NumberFormatException exc)
         		{
         			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
         		}
+
+        		if ((lambdaOne + lambdaTwo + lambdaThree + lambdaFour) != 100)
+        		{        			
+        			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of lambdas will be set to 30,20,30,20.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+        		}
         		
-        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, 50000, 0.01, 150.0, 100.0)
+        		lambdaOne   /= 100;
+        		lambdaTwo   /= 100;
+        		lambdaThree /= 100;
+        		lambdaFour  /= 100;
+        		
+        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, 50000, 0.01, 150.0, 100.0, lambdaOne, lambdaTwo, lambdaThree, lambdaFour)
        		 	{
        	            public void calculateVectors()
        	            {
-       	                ForceDirectedFactory.simulatedAnnealing(graph, 150.0, 300.0, 200.0, maxNoOfIterations);       	            
+       	                ForceDirectedFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);      	            
        	            }
        		 	};
        		 	
@@ -1213,12 +1285,12 @@ public class MainFrame extends JFrame {
             }
         }
 
-        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, 150, 100) {
+        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, 150, 100, 0.3, 0.2, 0.3, 0.2) {
             public void calculateVectors() {
                // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, threshold, map);
                // ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
                // ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
-                ForceDirectedFactory.simulatedAnnealing(graph, 150, 150, 125, maxNoOfIterations);
+                ForceDirectedFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);
             }
         };
         fd.addAlgorithmListener(new AlgorithmListener() {

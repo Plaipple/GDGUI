@@ -55,6 +55,8 @@ public class Experiment
                                                                         .append("\t")
                                                                         .append("Max Degree")
                                                                         .append("\t")
+                                                                        .append("EadesArea")
+                                                                        .append("\t")
                                                                         .append("Eades Angular")
                                                                         .append("\t")
                                                                         .append("Eades Crossing")
@@ -77,6 +79,8 @@ public class Experiment
                                                                         .append("Edges")
                                                                         .append("\t")
                                                                         .append("Max Degree")
+                                                                        .append("\t")
+                                                                        .append("NodeEdgeArea")
                                                                         .append("\t")
                                                                         .append("NodeEdge Angular")
                                                                         .append("\t")
@@ -127,6 +131,7 @@ public class Experiment
                 double eadesCrossing = 0;
                 double eadesEdgeLength = 0.0;
                 double eadesDistance = 0.0;
+                double eadesArea = 0.0;
                 int eadesNoOfCrossings = 0;
                 int eadesIterations = 0;
                 long eadesTime = 0;
@@ -135,6 +140,7 @@ public class Experiment
                 double nodeEdgeCrossing = 0;
                 double nodeEdgeEdgeLength = 0.0;
                 double nodeEdgeDistance = 0.0;
+                double nodeEdgeArea = 0.0;
                 int nodeEdgeNoOfCrossings = 0;
                 int nodeEdgeIterations = 0;
                 long nodeEdgeTime = 0;
@@ -185,6 +191,7 @@ public class Experiment
                     eadesEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
                     eadesNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     eadesDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
+                    eadesArea = util.Utilities.calculateUsedArea(view);
                     eadesIterations = eades.getMaxNoOfIterations();
                     eadesTime = (finishTime - startTime);
                     
@@ -215,6 +222,7 @@ public class Experiment
                     nodeEdgeEdgeLength = util.Utilities.calculateAverageEdgeLength(view);
                     nodeEdgeNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     nodeEdgeDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
+                    nodeEdgeArea = util.Utilities.calculateUsedArea(view);
                     nodeEdgeIterations = eades.getMaxNoOfIterations();
                     nodeEdgeTime = (finishTime - startTime);
                    
@@ -226,19 +234,21 @@ public class Experiment
                                                                                 .append("\t")
                                                                                 .append(maxDegree)
                                                                                 .append("\t")
-                                                                                .append(df.format(eadesAngular).replace(',', '.'))
+                                                                                .append(df.format(eadesArea))//.replace(',', '.'))
                                                                                 .append("\t")
-                                                                                .append(df.format(eadesCrossing).replace(',', '.'))
+                                                                                .append(df.format(eadesAngular))//.replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(df.format(eadesCrossing))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(eadesIterations)
                                                                                 .append("\t")
-                                                                                .append(df.format(eadesEdgeLength).replace(',', '.'))
+                                                                                .append(df.format(eadesEdgeLength))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(eadesNoOfCrossings)
                                                                                 .append("\t")
-                                                                                .append(df.format(eadesDistance).replace(',', '.'))
+                                                                                .append(df.format(eadesDistance))//.replace(',', '.'))
                                                                                 .append("\t")
-                                                                                .append(df.format(eadesTime).replace(',', '.'))
+                                                                                .append(df.format(eadesTime))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append("\t")
                                                                                 .append(children[i])
@@ -249,19 +259,21 @@ public class Experiment
                                                                                 .append("\t")
                                                                                 .append(maxDegree)
                                                                                 .append("\t")
-                                                                                .append(df.format(nodeEdgeAngular).replace(',', '.'))
+                                                                                .append(df.format(nodeEdgeArea))//.replace(',', '.'))
                                                                                 .append("\t")
-                                                                                .append(df.format(nodeEdgeCrossing).replace(',', '.'))
+                                                                                .append(df.format(nodeEdgeAngular))//.replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(df.format(nodeEdgeCrossing))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(nodeEdgeIterations)
                                                                                 .append("\t")
-                                                                                .append(df.format(nodeEdgeEdgeLength).replace(',', '.'))
+                                                                                .append(df.format(nodeEdgeEdgeLength))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(nodeEdgeNoOfCrossings)
                                                                                 .append("\t")
-                                                                                .append(df.format(nodeEdgeDistance).replace(',', '.'))
+                                                                                .append(df.format(nodeEdgeDistance))//.replace(',', '.'))
                                                                                 .append("\t")
-                                                                                .append(df.format(nodeEdgeTime).replace(',', '.'))
+                                                                                .append(df.format(nodeEdgeTime))//.replace(',', '.'))
                                                                                 .append("\n");
 
                    
