@@ -212,6 +212,7 @@ public class ForceDirectedFactory {
     	}
     }
     
+    
     static int temperature;
     static int index = 0;
     static double energyOld = 0;
@@ -254,7 +255,7 @@ public class ForceDirectedFactory {
         	
         	PointD n_old = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
         	graph.setNodeCenter(n, n_new);
-        	/// Now the same procedure is executed for the new Point        	
+        	/// Now the same procedure is executed for the new Point     
         	energyNew = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour);
         	
         	if (energyNew < energyOld)
@@ -336,7 +337,7 @@ public class ForceDirectedFactory {
     	}
     	energyBorderlines /= graph.getNodes().size();
     	energyBorderlines *= lambdaTwo;
-    	energy += energyBorderlines;
+    	//energy += energyBorderlines;
 		
 		
 		/*IListEnumerable<IPort> nPorts = n.getPorts();
@@ -381,7 +382,7 @@ public class ForceDirectedFactory {
 			if (shortestNodeEdgeDist != Double.POSITIVE_INFINITY)
 			{
 				//energy += lambdaFour / (Math.pow(shortestNodeEdgeDist, 2));
-				if (Math.abs(150 - shortestNodeEdgeDist) < 50) 
+				if (Math.abs(150 - shortestNodeEdgeDist) > 50) 
 				{
 					energyNodeEdgeDist += Math.abs((150 - shortestNodeEdgeDist) * 3);
 				}

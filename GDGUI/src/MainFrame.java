@@ -22,6 +22,8 @@ import io.ChristianIOHandler;
 import io.SergeyIOHandler;
 import layout.algo.ForceDirectedAlgorithm;
 import layout.algo.ForceDirectedFactory;
+import layout.algo.SimulatedAnnealingAlgorithm;
+import layout.algo.SimulatedAnnealingFactory;
 import layout.algo.event.AlgorithmEvent;
 import layout.algo.event.AlgorithmListener;
 import util.RandomGraphGenerator;
@@ -814,12 +816,6 @@ public class MainFrame extends JFrame {
         layoutMenu.add(organicItem);
         layoutMenu.add(new JSeparator());
 
-        JMenuItem springEmbedderItem = new JMenuItem();
-        springEmbedderItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
-        springEmbedderItem.setText("Spring Embedder");
-        springEmbedderItem.addActionListener(this::springEmbedderItemActionPerformed);
-        layoutMenu.add(springEmbedderItem);
-
         /*
         this.fppItem = new JMenuItem();
         this.fppItem.setIcon(new ImageIcon(getClass().getResource("/resources/layout-16.png")));
@@ -942,56 +938,54 @@ public class MainFrame extends JFrame {
         {
         	public void actionPerformed(ActionEvent evt) 
         	{
-        		int iterations = 1000;
-                double electricrepulsion = 50000;
-                double threshold = 0.01;
-                double springstiffness = 150.0;
-                double naturalspringlength = 100.0;
         		
-        		try
-        		{
-                    iterations = Integer.parseInt(iterationsTextField.getText());
-                    electricrepulsion = Double.parseDouble(repulsionTextField.getText());
-                    threshold = Double.parseDouble(thresholdTextField.getText());
-                    springstiffness = Double.parseDouble(springStiffTextField.getText());
-                    naturalspringlength = Double.parseDouble(natSpringLengthTextField.getText());
-                } 
+                try
+                {
+            		final int iterations = Integer.parseInt(iterationsTextField.getText());
+                    final double electricrepulsion = Double.parseDouble(repulsionTextField.getText());
+                    final double threshold = Double.parseDouble(thresholdTextField.getText());
+                    final double springstiffness = Double.parseDouble(springStiffTextField.getText());
+                    final double naturalspringlength = Double.parseDouble(natSpringLengthTextField.getText());                                                  
+
+                	ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations)
+                	{
+                		public void calculateVectors()
+                		{
+                			if (checkSpringRepulsion.isSelected()) ForceDirectedFactory.calculateSpringForcesEades(graph, springstiffness, naturalspringlength, threshold, map);
+                			if (checkRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
+                			if (checkEVRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);        	            
+                		}
+                	};
+
+                	fd.addAlgorithmListener(new AlgorithmListener()
+                	{
+                		public void algorithmStarted(AlgorithmEvent evt) {
+                		}
+
+                		public void algorithmFinished(AlgorithmEvent evt) {
+                			progressBar.setValue(0);
+                			view.fitContent();
+                			view.updateUI();
+                		}
+
+                		public void algorithmStateChanged(AlgorithmEvent evt) {
+                			progressBar.setValue(evt.currentStatus());
+                		}
+                	});
+                	Thread thread = new Thread(fd);
+                	thread.start();
+                	//this.view.updateUI();
+                	view.updateUI();
+                }        	
+
         		catch (NumberFormatException exc) 
         		{
                     JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
                 }
+        	} 
+        });      
         		
-        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, springstiffness, naturalspringlength, 0, 0, 0, 0)
-       		 	{
-       	            public void calculateVectors()
-       	            {
-       	                if (checkSpringRepulsion.isSelected()) ForceDirectedFactory.calculateSpringForcesEades(graph, springstiffness, naturalspringlength, threshold, map);
-       	                if (checkRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
-       	                if (checkEVRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);        	            
-       	            }
-       		 	};
-       		 	
-       		    fd.addAlgorithmListener(new AlgorithmListener()
-       		    {
-       		    	public void algorithmStarted(AlgorithmEvent evt) {
-       		    	}
-
-       		    	public void algorithmFinished(AlgorithmEvent evt) {
-       		    		progressBar.setValue(0);
-       		    		view.fitContent();
-       		    		view.updateUI();
-       		    	}
-
-       		    	public void algorithmStateChanged(AlgorithmEvent evt) {
-       		    		progressBar.setValue(evt.currentStatus());
-       		    	}
-       		    });
-       		    Thread thread = new Thread(fd);
-       		    thread.start();
-       		    //this.view.updateUI();
-       		    view.updateUI();
-        	}
-        });
+        		
         
         JPanel simAnneal = new JPanel();
        
@@ -1002,6 +996,7 @@ public class MainFrame extends JFrame {
         JLabel lambdaTwoLabel = new JLabel("Pos. towards Borders:");
         JLabel lambdaThreeLabel = new JLabel("Avg. Edge Lengths:");
         JLabel lambdaFourLabel = new JLabel("Avg. Node-Edge Dist.:");
+        JLabel iterationsSimAnnealLabel = new JLabel ("Iterations: ");
         JTextField lambdaOneTextField = new JTextField("30", 8);
         JTextField lambdaTwoTextField = new JTextField("20", 8);
         JTextField lambdaThreeTextField = new JTextField("30", 8);
@@ -1020,10 +1015,7 @@ public class MainFrame extends JFrame {
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 0;
         simAnneal.add(lambdaInfo, annealConstraints);
-        
-        annealConstraints.gridx = 1;
-        simAnneal.add(lambdaInfoTwo, annealConstraints);
-        
+              
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 1;
         simAnneal.add(lambdaOneLabel, annealConstraints);
@@ -1058,7 +1050,7 @@ public class MainFrame extends JFrame {
         
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 6;
-        simAnneal.add(iterationsLabel, annealConstraints);
+        simAnneal.add(iterationsSimAnnealLabel, annealConstraints);
         
         annealConstraints.gridx = 1;
         simAnneal.add(iterationsPanelTwoTextField, annealConstraints);
@@ -1072,65 +1064,52 @@ public class MainFrame extends JFrame {
         {
         	public void actionPerformed(ActionEvent evt) 
         	{
-        		int iterations = 1000;
-        		double lambdaOne = 30;
-        		double lambdaTwo = 20;
-        		double lambdaThree = 30;
-        		double lambdaFour = 20;
+
         		
         		try
-        		{
-                    iterations = Integer.parseInt(iterationsPanelTwoTextField.getText());
-                    lambdaOne = Double.parseDouble(lambdaOneTextField.getText());
-                    lambdaTwo = Double.parseDouble(lambdaTwoTextField.getText());
-                    lambdaThree = Double.parseDouble(lambdaThreeTextField.getText());
-                    lambdaFour = Double.parseDouble(lambdaFourTextField.getText());
-                } 
+        		{        			
+                    final int iterations = Integer.parseInt(iterationsPanelTwoTextField.getText());
+                    final double lambdaOne = Double.parseDouble(lambdaOneTextField.getText()) / 100;
+                    final double lambdaTwo = Double.parseDouble(lambdaTwoTextField.getText()) / 100;
+                    final double lambdaThree = Double.parseDouble(lambdaThreeTextField.getText()) / 100;
+                    final double lambdaFour = Double.parseDouble(lambdaFourTextField.getText()) / 100;                    
+            		
+            		SimulatedAnnealingAlgorithm sa = new SimulatedAnnealingAlgorithm(view, iterations)
+           		 	{
+           	            public void calculatePositions()
+           	            {
+           	                SimulatedAnnealingFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);      	            
+           	            }
+           		 	};
+           		 	
+           		 	sa.addAlgorithmListener(new AlgorithmListener()
+           		 		{
+           		 			public void algorithmStarted(AlgorithmEvent evt) {
+        		    	}
+
+        		    	public void algorithmFinished(AlgorithmEvent evt) 
+        		    	{
+        		    		progressBar.setValue(0);
+        		    		view.fitContent();
+        		    		view.updateUI();
+        		    	}
+
+        		    	public void algorithmStateChanged(AlgorithmEvent evt) 
+        		    	{
+        		    		progressBar.setValue(evt.currentStatus());
+        		    	}
+        		    });
+        		    Thread thread = new Thread(sa);
+        		    thread.start();
+        		    //this.view.updateUI();
+        		    view.updateUI();
+            	}
+                 
         		catch (NumberFormatException exc)
         		{
         			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
         		}
-
-        		if ((lambdaOne + lambdaTwo + lambdaThree + lambdaFour) != 100)
-        		{        			
-        			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of lambdas will be set to 30,20,30,20.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
-        		}
-        		
-        		lambdaOne   /= 100;
-        		lambdaTwo   /= 100;
-        		lambdaThree /= 100;
-        		lambdaFour  /= 100;
-        		
-        		ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, 50000, 0.01, 150.0, 100.0, lambdaOne, lambdaTwo, lambdaThree, lambdaFour)
-       		 	{
-       	            public void calculateVectors()
-       	            {
-       	                ForceDirectedFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);      	            
-       	            }
-       		 	};
-       		 	
-       		 	fd.addAlgorithmListener(new AlgorithmListener()
-       		 		{
-       		 			public void algorithmStarted(AlgorithmEvent evt) {
-    		    	}
-
-    		    	public void algorithmFinished(AlgorithmEvent evt) 
-    		    	{
-    		    		progressBar.setValue(0);
-    		    		view.fitContent();
-    		    		view.updateUI();
-    		    	}
-
-    		    	public void algorithmStateChanged(AlgorithmEvent evt) 
-    		    	{
-    		    		progressBar.setValue(evt.currentStatus());
-    		    	}
-    		    });
-    		    Thread thread = new Thread(fd);
-    		    thread.start();
-    		    //this.view.updateUI();
-    		    view.updateUI();
-        	}
+        	}	
         });	
         
         
@@ -1261,56 +1240,8 @@ public class MainFrame extends JFrame {
 
     /*********************************************************************
      * Implementation of actions
-     ********************************************************************/
-
-    private void springEmbedderItemActionPerformed(ActionEvent evt) {
-        JTextField iterationsTextField = new JTextField("1000");
-        JTextField repulsionTextField = new JTextField("50000");
-        JTextField thresholdTextField = new JTextField("0.01");
-        int iterations = 1000;
-        double electricrepulsion = 50000;
-        double threshold = 0.01;
-
-        int result = JOptionPane.showOptionDialog(null, new Object[]{"Number of Iterations: ", iterationsTextField, "Repulsion Value: ", repulsionTextField, "Threshold: ", thresholdTextField},
-        		"Algorithm Properties", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-        
-
-        if (result == JOptionPane.OK_OPTION) {
-            try {
-                iterations = Integer.parseInt(iterationsTextField.getText());
-                electricrepulsion = Double.parseDouble(repulsionTextField.getText());
-                threshold = Double.parseDouble(thresholdTextField.getText());
-            } catch (NumberFormatException exc) {
-                JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 5000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        ForceDirectedAlgorithm fd = new ForceDirectedAlgorithm(view, iterations, electricrepulsion, threshold, 150, 100, 0.3, 0.2, 0.3, 0.2) {
-            public void calculateVectors() {
-               // ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, threshold, map);
-               // ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
-               // ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);
-                ForceDirectedFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);
-            }
-        };
-        fd.addAlgorithmListener(new AlgorithmListener() {
-            public void algorithmStarted(AlgorithmEvent evt) {
-            }
-
-            public void algorithmFinished(AlgorithmEvent evt) {
-                progressBar.setValue(0);
-                view.fitContent();
-                view.updateUI();
-            }
-
-            public void algorithmStateChanged(AlgorithmEvent evt) {
-                progressBar.setValue(evt.currentStatus());
-            }
-        });
-        Thread thread = new Thread(fd);
-        thread.start();
-        this.view.updateUI();
-    }
+     *********************************************************************/
+     
 
     private void organicItemActionPerformed(ActionEvent evt) {
         LayoutUtilities.morphLayout(this.view, new OrganicLayout(), Duration.ofSeconds(1), null);

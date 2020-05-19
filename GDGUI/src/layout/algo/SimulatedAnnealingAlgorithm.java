@@ -21,19 +21,17 @@ import java.util.List;
 import java.util.WeakHashMap;
 
 /**
- * This abstract class is implemented a framework for force-directed algorithms, in which several different
- * forces can be present through the method calculateForces(). The implementation is done using the Runnable
+ * This abstract class is implemented a framework for simulated-annealing algorithms, in which several different
+ * criteria can be evaluated through the method calculatePositions(). The implementation is done using the Runnable
  * interface, where AlgorithmListeners are notified during the execution.
  *
- * @author Michael A. Bekos
+ * @author Patrick Laipple
  */
-public abstract class ForceDirectedAlgorithm  implements Runnable
+public abstract class SimulatedAnnealingAlgorithm  implements Runnable
 {
     protected GraphComponent view;
     protected IGraph graph;
-    protected IMapper<INode, List<YVector>> map;           //Here the forces are saved.
     protected int maxNoOfIterations;                //The maximum number of iterations.
-    protected static List<ICanvasObject> canvasObjects = new ArrayList<>();
 
     //Graph Listeners.
     // A listener can, e.g., interrupt the iteration process, if it detects converge by setting maxNoOfIterations to -1.
@@ -44,11 +42,11 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      * @param view - an object of type Graph2DView
      * @param maxNoOfIterations - the maximum number of iterations
      */
-    public ForceDirectedAlgorithm(GraphComponent view, int maxNoOfIterations)
+    public SimulatedAnnealingAlgorithm(GraphComponent view, int maxNoOfIterations)
     {
         this.view = view;
         this.graph = view.getGraph();
-        this.maxNoOfIterations = maxNoOfIterations;      
+        this.maxNoOfIterations = maxNoOfIterations;
         this.algorithmListeners = new ArrayList<AlgorithmListener>();
     }
 
@@ -56,7 +54,7 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      * Abstract method to calculate the vectors.
      * Subclasses must implement this method.
      */
-    public abstract void calculateVectors();
+    public abstract void calculatePositions();
 
     /**
      * Execute the algorithm
@@ -75,15 +73,15 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
         if (this.maxNoOfIterations == 0)
         {
             this.init();
-            this.calculateVectors();
-            this.displayVectors();
+            this.calculatePositions();
+            //this.displayVectors();
         }
 
         for (int i=0; i<this.maxNoOfIterations; i++)
         {
             this.init();
-            this.calculateVectors();
-            this.draw();
+            this.calculatePositions();
+            //this.draw();
 
             try
             {
@@ -111,71 +109,13 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
         }
     }
 
-    /**
-     * Draw the result by adding the vectors of each node.
-     */
-    protected void draw()
-    {
-        for (INode u : graph.getNodes())
-        {
-            YVector vector = new YVector(0,0);
-            List<YVector> vectors = (List<YVector>) this.map.getValue(u);
-
-            Iterator<YVector> it = vectors.iterator();
-            while (it.hasNext())
-            {
-                vector.add(it.next());
-            }
-
-            double u_x = u.getLayout().getCenter().x;
-            double u_y = u.getLayout().getCenter().y;
-
-            YPoint p_u = new YPoint(u_x, u_y);
-
-            p_u = YVector.add(p_u, vector);
-
-            this.view.getGraph().setNodeCenter(u, new PointD(p_u.getX(),p_u.getY()));
-        }
-        this.view.updateUI();
-    }
-
-
-
-    /**
-     * A method implemented for debugging purposes, which displays the vectors at each vertex.
-     */
-    protected void displayVectors()
-    {
-        for (INode u : graph.getNodes())
-        {
-            YVector vector = new YVector(0,0);
-            List<YVector> vectors = (List<YVector>) this.map.getValue(u);
-
-            Iterator<YVector> it = vectors.iterator();
-            while (it.hasNext())
-            {
-                YVector temp = it.next();
-                this.canvasObjects.add(this.view.getBackgroundGroup().addChild(new VectorVisual(this.view, temp, u, Color.RED), ICanvasObjectDescriptor.VISUAL));
-                vector.add(temp);
-            }
-        }
-        this.view.updateUI();
-    }
 
     /**
      * Initiates a run.
      */
     protected void init()
     {
-        if (this.map == null)
-        {
-            this.map = new Mapper<>(new WeakHashMap<>());
-            for (INode u : graph.getNodes())
-            {
-                this.map.setValue(u, new java.util.ArrayList<YVector>());
-            }
-        }
-        this.clearDrawables();
+    	
     }
 
     /**
@@ -183,12 +123,7 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
      */
     protected void reset()
     {
-        for (INode u : graph.getNodes())
-        {
-            List<YVector> vectors = (List<YVector>) this.map.getValue(u);
-            vectors.clear();
-        }
-        this.clearDrawables();
+
     }
 
     /**
@@ -207,28 +142,6 @@ public abstract class ForceDirectedAlgorithm  implements Runnable
     public void removeAlgorithmListener(AlgorithmListener algorithmListener)
     {
         this.algorithmListeners.remove(algorithmListener);
-    }
-
-    /**
-     * Returns the NodeMap in which the forces are stored.
-     * @return - the NodeMap in which the forces are stored.
-     */
-    public IMapper<INode, List<YVector>> getMap()
-    {
-        return this.map;
-    }
-
-    /**
-     * Clear drawables.
-     */
-    private void clearDrawables()
-    {
-        for (ICanvasObject o : canvasObjects)
-        {
-            o.remove();
-        }
-        canvasObjects.clear();
-        this.view.updateUI();
     }
 
     /**

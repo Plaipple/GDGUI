@@ -10,6 +10,8 @@
 
 import com.yworks.yfiles.view.GraphComponent;
 
+import layout.algo.SimulatedAnnealingFactory;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -70,7 +72,7 @@ public class Experiment
                                                                         .append("Eades Distance")
                                                                         .append("\t")
                                                                         .append("Eades Time")
-                                                                        .append("\t")
+                                                                        .append("\t")/*
                                                                         .append("\t")
                                                                         .append("Graph")
                                                                         .append("\t")
@@ -95,6 +97,31 @@ public class Experiment
                                                                         .append("NodeEdge Distance")
                                                                         .append("\t")
                                                                         .append("NodeEdge Time")
+                                                                        .append("\n")*/
+                                                                        .append("\t")
+                                                                        .append("Graph")
+                                                                        .append("\t")
+                                                                        .append("Nodes")
+                                                                        .append("\t")
+                                                                        .append("Edges")
+                                                                        .append("\t")
+                                                                        .append("Max Degree")
+                                                                        .append("\t")
+                                                                        .append("SA Area")
+                                                                        .append("\t")
+                                                                        .append("SA Angular")
+                                                                        .append("\t")
+                                                                        .append("SA Crossing")
+                                                                        .append("\t")
+                                                                        .append("SA Iterations")
+                                                                        .append("\t")
+                                                                        .append("SA Edge Length")
+                                                                        .append("\t")
+                                                                        .append("SA Crossings")
+                                                                        .append("\t")
+                                                                        .append("SA Distance")
+                                                                        .append("\t")
+                                                                        .append("SA Time")
                                                                         .append("\n");
 
             fstream = new java.io.FileWriter(txt, true);
@@ -170,7 +197,7 @@ public class Experiment
                     startTime = System.currentTimeMillis();
 
                     //Then, run Eades' algorithm
-                    layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01, 150, 100) {
+                    layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000) {
                         public void calculateVectors() {
                             layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
@@ -201,17 +228,15 @@ public class Experiment
                     view.requestFocus();
                     startTime = System.currentTimeMillis();
                     //Then, run Eades' algorithm
-                    layout.algo.ForceDirectedAlgorithm nodeEdges = new layout.algo.ForceDirectedAlgorithm(view, 1000, 100000, 0.01, 150, 100) {
-                        public void calculateVectors() {
-                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
-                            layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
-                            layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
+                    layout.algo.SimulatedAnnealingAlgorithm simAnneal = new layout.algo.SimulatedAnnealingAlgorithm(view, 1000) {
+                        public void calculatePositions() {
+                            layout.algo.SimulatedAnnealingFactory.simulatedAnnealing(graph, 0.3, 0.2, 0.3, 0.2, maxNoOfIterations);
                         }
                     };
           			
                     LayoutUtilities.applyLayout(view.getGraph(), new OrganicLayout());
                     
-                    nodeEdges.run();
+                    simAnneal.run();
 
                     finishTime = System.currentTimeMillis();
                     
