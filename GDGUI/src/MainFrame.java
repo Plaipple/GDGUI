@@ -834,6 +834,10 @@ public class MainFrame extends JFrame {
     
     private JTabbedPane initTabPanel()
     {        
+    	/* 
+    	 * Declarations of the Labels and Textfields for the panel 
+    	 * where the settings for the repulsion Algorithm is set.
+    	 */
     	               
     	JPanel repulsion = new JPanel();
 
@@ -986,6 +990,9 @@ public class MainFrame extends JFrame {
         });      
         		
         		
+        /*
+         * Declaration of the tab for the settings of the Simulated Annealing Algorithm
+         */
         
         JPanel simAnneal = new JPanel();
        

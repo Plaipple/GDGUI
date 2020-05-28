@@ -13,7 +13,7 @@ import com.yworks.yfiles.graph.INode;
 public class SimulatedAnnealingFactory {
 
     /**
-     * Calculate spring forces with classical spring embedder algorithm.
+     * Calculate energy function for the Davidson Harel Simulated Annealing
      * @param graph - the input graph.
      * @param lambdaOne - the importance of the node distribution
      * @param lambdaTwo - the importance of the borderline positions
@@ -22,6 +22,7 @@ public class SimulatedAnnealingFactory {
      * @param map - the NodeMap, where the calculated forces will be stored (might be non-empty).
      */
     
+	//Declaration of static Variables which are also needed to be saved between the iterations
     static int temperature;
     static int index = 0;
     static double energyOld = 0;
@@ -34,16 +35,20 @@ public class SimulatedAnnealingFactory {
     
     public static void simulatedAnnealing (IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, int iterations, int area)
     {
+    	//Adjust the temperature value after each iteration
     	temperature = iterations - index;
     	double positionRadius;
     	
+    	//if all four lambdas are 0 then none of the energy functions is applied and thus the algorithm can return
     	if (lambdaOne == 0 && lambdaTwo == 0 && lambdaThree == 0 && lambdaFour == 0) return;
     	
+    	//Only in the first iteration the bounds are to be set for the area the graph is allowed to use
+    	//and the array nodePositions gets filled with positions of the nodes in the graph
     	if (index == 0)
     	{
 			nodePositions = new PointD[graph.getNodes().size()];
 			int nodeNumber = 0;
-			
+						
     		for (INode i : graph.getNodes())
     		{   
     			i.setTag(nodeNumber);
@@ -55,42 +60,57 @@ public class SimulatedAnnealingFactory {
     			nodeNumber ++;
     		}
     		
-    		//add a textbox for controlling the area * nodes on side panel
+    		//The bottom and right bound are set dynamically depending on how many nodes 
+    		//the graph has. The factor can be set in the panel for the SA Algorithm
     		double dynamic_bound_bottom = bound_top + (area * graph.getNodes().size());
     		double dynamic_bound_right = bound_left + (area * graph.getNodes().size());
+    		
+    		//Don't take the dynamic values if they are greater than the position of the most outside node
+    		//Because it could happen that nodes of the initial graph are placed outside the dynamic bounds
+    		//Then these are ignored while running the algorithm and do not change their positions
     		if (dynamic_bound_bottom > bound_bottom) bound_bottom = dynamic_bound_bottom;
     		if (dynamic_bound_right > bound_right) bound_right = dynamic_bound_right;
     	}
 
+    	//Calculate the energy function of the initial graph layout
     	energyOld = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, nodePositions);
-    	//addenergyparameters
 
+    	//main loop of the Simulated Annealing algorithm
     	for (INode n : graph.getNodes())
     	{   
+    		//Energy function of the new graph positioning after one node has been moved
     		double energyNew = 0;   		
     		PointD n_old = nodePositions[(int)n.getTag()];
         	
+    		//The radius of the new position is determined dynamically and decreases during the runtime.
+    		//(at 1000 iterations it decreases by 0.1%)
     		positionRadius = 100 * ((double)temperature / (double)iterations);
     		
-        	//Creating randomized coordinates for the new position within 200 units distance in any direction
+        	//Creating randomized coordinates for the new position within the distance of positionRadius in any direction
         	int signx = (Math.random() > 0.5) ? -1 : 1;
         	int signy = (Math.random() > 0.5) ? -1 : 1;
         	double newposx = Math.random() * positionRadius * signx;
         	double newposy = Math.random() * positionRadius * signy;
         	PointD n_new = new PointD((n.getLayout().getCenter().x + newposx), (n.getLayout().getCenter().y + newposy));
         	
+        	//check if the new position lies within the bounds + some extra space that can be determined manually
         	if(n_new.x > bound_right - boundThreshold || n_new.x < bound_left + boundThreshold || n_new.y > bound_bottom - boundThreshold || n_new.y < bound_top + boundThreshold) continue;
         	
+        	//change the position of the node in the array so that the new energy can be calculated for the graph
         	nodePositions[(int)n.getTag()] = n_new;
         	
-        	/// Now the same procedure is executed for the new Point     
+        	/// Now the same procedure is executed for the new Point
         	energyNew = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, nodePositions);
         	
+        	//the better positioning leads to saving the coordinates for the node n and updating the actual graph
         	if (energyNew < energyOld)
         	{
         		energyOld = energyNew;
             	graph.setNodeCenter(n, n_new);
         	}
+        	//if the new position has a worse energy value the algorithm still might take it
+        	//by a probability which is depending on the current temperature and the 
+        	//energy difference of the two positions
             else
         	{
         		double ratio = energyOld / energyNew * 0.1;
@@ -126,6 +146,8 @@ public class SimulatedAnnealingFactory {
     
     public static double calculateNodeNodeDistances (IGraph graph, double lambdaOne)
     {
+    	//calculate the shortest distance to the next node for each node and get the average shortest
+    	//distance of all nodes
     	double shortestNodeNodeDist = Double.POSITIVE_INFINITY;
     	double energyNodeDistances = 0;
     	
@@ -142,12 +164,16 @@ public class SimulatedAnnealingFactory {
     		shortestNodeNodeDist = Double.POSITIVE_INFINITY;
     	}
     	energyNodeDistances /= graph.getNodes().size();
+    	
+    	//add the average value to the energy function multiplied by lambda one which can be chosen
+    	//manually in the SA Settings tab
     	return energyNodeDistances * lambdaOne;   	
     }
     
     
     public static double calculateCrossingNumber (IGraph graph, double lambdaTwo)
     {
+    	//calculate the number of edge intersections
     	double energyCrossings = 0;
     	int numberOfCrossings = 0;
     	IEdge edges[] = new IEdge[graph.getEdges().size()];
@@ -179,6 +205,9 @@ public class SimulatedAnnealingFactory {
     		}
     	}
     	
+    	//multiply the result by 5 to get values which are corresponding to the rest of
+    	//the energy function operations and make sense
+    	//also the lambdaTwo determines how important this operation is respective to the others
     	energyCrossings = numberOfCrossings * 5 * lambdaTwo;    	
     	return energyCrossings;
     }
@@ -213,21 +242,7 @@ public class SimulatedAnnealingFactory {
     
     public static double calculateAvgEdgeLength (IGraph graph, double lambdaThree)
     {
-    	/*IListEnumerable<IPort> nPorts = n.getPorts();
-		for (IPort p : nPorts)
-		{
-			for (IEdge e_adj : graph.edgesAt(p, AdjacencyTypes.ALL))
-			{
-				PointD e_adj_s = new PointD(e_adj.getSourceNode().getLayout().getCenter().x, e_adj.getSourceNode().getLayout().getCenter().y);
-				PointD e_adj_t = new PointD(e_adj.getTargetNode().getLayout().getCenter().x, e_adj.getTargetNode().getLayout().getCenter().y);
-				cumulativeEdgeDist += e_adj_s.distanceTo(e_adj_t);
-				countedges ++;
-			}
-		}
-		if (countedges != 0) averageEdgeDist = cumulativeEdgeDist / countedges;
-		
-    	cumulativeEdgeDist = 0;
-    	countedges = 0;*/
+    	//calculate the edge lengths of all edges and get the average value
     	
     	double energyEdgeLengths = 0;
     	for (IEdge e : graph.getEdges())
@@ -236,11 +251,15 @@ public class SimulatedAnnealingFactory {
 					                           (nodePositions[(int)e.getTargetNode().getTag()]));
 		}
 		energyEdgeLengths /= graph.getEdges().size();
+		
+		//multiply it by lambdaThree to add the normalizing factor of the result
 		return energyEdgeLengths * lambdaThree;		
     }
     
     public static double calculateNodeEdgeDistances (IGraph graph, double lambdaFour)
     {
+    	//For each node calculate the distance between the node and an edge which lies closest to
+    	//that node. But the node must not be target- or sourceNode of the edge
     	double shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
     	double energyNodeEdgeDist = 0;
     	
@@ -261,6 +280,10 @@ public class SimulatedAnnealingFactory {
 																	
 			shortestNodeEdgeDist = Double.POSITIVE_INFINITY;
 		}
+    	
+    	//calculate the average distance for each node-edge-distance and 
+    	//take the lambdaFour into account for the importance of this operation 
+    	//respective to the others
 		energyNodeEdgeDist /= graph.getNodes().size();
 		return energyNodeEdgeDist * lambdaFour;
     }
