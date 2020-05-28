@@ -132,7 +132,7 @@ public class Experiment
 
             String inputDirectory = "C:/Users/patri_000/Desktop/Graphml/";
             String outputDirectoryEades = "C:/Users/patri_000/Desktop/OutputEades/";
-            String outputDirectoryNodeEdge = "C:/Users/patri_000/Desktop/OutputNodeEdge/";
+            String outputDirectoryNodeEdge = "C:/Users/patri_000/Desktop/OutputSA/";
 
             java.io.File dir = new java.io.File(inputDirectory);
 
@@ -197,6 +197,7 @@ public class Experiment
                     startTime = System.currentTimeMillis();
 
                     //Then, run Eades' algorithm
+                    /*
                     layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000) {
                         public void calculateVectors() {
                             layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
@@ -220,17 +221,17 @@ public class Experiment
                     eadesDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     eadesArea = util.Utilities.calculateUsedArea(view);
                     eadesIterations = eades.getMaxNoOfIterations();
-                    eadesTime = (finishTime - startTime);
+                    eadesTime = (finishTime - startTime);*/
                     
                     view.getGraph().clear();
                     ioh.read(view.getGraph(), inputDirectory + children[i]);
                     view.fitContent();
                     view.requestFocus();
                     startTime = System.currentTimeMillis();
-                    //Then, run Eades' algorithm
+                    //Then, run the Simulated Annealing algorithm
                     layout.algo.SimulatedAnnealingAlgorithm simAnneal = new layout.algo.SimulatedAnnealingAlgorithm(view, 1000) {
                         public void calculatePositions() {
-                            layout.algo.SimulatedAnnealingFactory.simulatedAnnealing(graph, 0.3, 0.2, 0.3, 0.2, maxNoOfIterations);
+                            layout.algo.SimulatedAnnealingFactory.simulatedAnnealing(graph, 0.3, 0.5, 0.4, 0.4, maxNoOfIterations, 40);
                         }
                     };
           			
@@ -248,7 +249,7 @@ public class Experiment
                     nodeEdgeNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     nodeEdgeDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     nodeEdgeArea = util.Utilities.calculateUsedArea(view);
-                    nodeEdgeIterations = eades.getMaxNoOfIterations();
+                    nodeEdgeIterations = simAnneal.getMaxNoOfIterations();
                     nodeEdgeTime = (finishTime - startTime);
                    
                     java.lang.StringBuffer buffer = new java.lang.StringBuffer().append(children[i])

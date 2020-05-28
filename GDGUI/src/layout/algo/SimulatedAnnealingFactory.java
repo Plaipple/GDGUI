@@ -1,5 +1,7 @@
 package layout.algo;
 
+import com.yworks.yfiles.algorithms.LineSegment;
+import com.yworks.yfiles.algorithms.YPoint;
 import com.yworks.yfiles.geometry.PointD;
 import com.yworks.yfiles.graph.IEdge;
 import com.yworks.yfiles.graph.IGraph;
@@ -30,10 +32,12 @@ public class SimulatedAnnealingFactory {
 	static double bound_right = Double.NEGATIVE_INFINITY;
 	static PointD nodePositions[];
     
-    public static void simulatedAnnealing (IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, int iterations)
+    public static void simulatedAnnealing (IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, int iterations, int area)
     {
     	temperature = iterations - index;
     	double positionRadius;
+    	
+    	if (lambdaOne == 0 && lambdaTwo == 0 && lambdaThree == 0 && lambdaFour == 0) return;
     	
     	if (index == 0)
     	{
@@ -51,16 +55,16 @@ public class SimulatedAnnealingFactory {
     			nodeNumber ++;
     		}
     		
-    		double dynamic_bound_bottom = bound_top + (40 * graph.getNodes().size());
-    		double dynamic_bound_right = bound_left + (40 * graph.getNodes().size());
+    		//add a textbox for controlling the area * nodes on side panel
+    		double dynamic_bound_bottom = bound_top + (area * graph.getNodes().size());
+    		double dynamic_bound_right = bound_left + (area * graph.getNodes().size());
     		if (dynamic_bound_bottom > bound_bottom) bound_bottom = dynamic_bound_bottom;
     		if (dynamic_bound_right > bound_right) bound_right = dynamic_bound_right;
     	}
 
     	energyOld = calculateEnergyFunction(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, nodePositions);
+    	//addenergyparameters
 
-
-    	
     	for (INode n : graph.getNodes())
     	{   
     		double energyNew = 0;   		
@@ -111,11 +115,12 @@ public class SimulatedAnnealingFactory {
     
     public static double calculateEnergyFunction(IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, PointD nodePositions[])
     {
-		double energy = 0;
-    	energy += calculateNodeNodeDistances(graph, lambdaOne);
-    	energy += calculateBorderlinePositions(graph, lambdaTwo);
-    	energy += calculateAvgEdgeLength(graph, lambdaThree);
-    	energy += calculateNodeEdgeDistances(graph, lambdaFour);
+		double energy = 0;		
+    	if (lambdaOne != 0) energy += calculateNodeNodeDistances(graph, lambdaOne);
+    	//if (lambdaTwo != 0) energy += calculateBorderlinePositions(graph, lambdaTwo);
+    	if (lambdaTwo != 0) energy += calculateCrossingNumber(graph, lambdaTwo);
+    	if (lambdaThree != 0) energy += calculateAvgEdgeLength(graph, lambdaThree);
+    	if (lambdaFour != 0) energy += calculateNodeEdgeDistances(graph, lambdaFour);
     	return energy;
     }
     
@@ -139,6 +144,45 @@ public class SimulatedAnnealingFactory {
     	energyNodeDistances /= graph.getNodes().size();
     	return energyNodeDistances * lambdaOne;   	
     }
+    
+    
+    public static double calculateCrossingNumber (IGraph graph, double lambdaTwo)
+    {
+    	double energyCrossings = 0;
+    	int numberOfCrossings = 0;
+    	IEdge edges[] = new IEdge[graph.getEdges().size()];
+    	
+    	int k = 0;
+    	for (IEdge e : graph.getEdges())
+    	{
+    		edges[k] = e;
+    		k++;
+    	}
+    	
+    	for (int i = 0; i < edges.length; i++)
+    	{
+			YPoint n1 = new YPoint(edges[i].getSourceNode().getLayout().getCenter().x, edges[i].getSourceNode().getLayout().getCenter().y);
+			YPoint n2 = new YPoint(edges[i].getTargetNode().getLayout().getCenter().x, edges[i].getTargetNode().getLayout().getCenter().y);
+					
+    		for (int j = i+1; j < edges.length; j++)
+    		{
+    			YPoint u1 = new YPoint(edges[j].getSourceNode().getLayout().getCenter().x, edges[j].getSourceNode().getLayout().getCenter().y);
+    			YPoint u2 = new YPoint(edges[j].getTargetNode().getLayout().getCenter().x, edges[j].getTargetNode().getLayout().getCenter().y);
+    			
+    			LineSegment l_e1 = new LineSegment(n1, n2);
+    			LineSegment l_e2 = new LineSegment(u1, u2);
+    			
+    			if (LineSegment.getIntersection(l_e2, l_e1) != null)
+    			{
+    				numberOfCrossings ++;
+    			}
+    		}
+    	}
+    	
+    	energyCrossings = numberOfCrossings * 5 * lambdaTwo;    	
+    	return energyCrossings;
+    }
+    
     
     public static double calculateBorderlinePositions (IGraph graph, double lambdaTwo)
     {

@@ -991,16 +991,18 @@ public class MainFrame extends JFrame {
        
         
         JLabel lambdaInfo = new JLabel("Importance of Op.");
-        JLabel lambdaInfoTwo = new JLabel("Must add up to 100");
+        JLabel lambdaInfoTwo = new JLabel("Value: 0 deactivates");
         JLabel lambdaOneLabel = new JLabel("Avg. Node-Pair Dist.:");
-        JLabel lambdaTwoLabel = new JLabel("Pos. towards Borders:");
+        JLabel lambdaTwoLabel = new JLabel("Edge Crossings:");
         JLabel lambdaThreeLabel = new JLabel("Avg. Edge Lengths:");
         JLabel lambdaFourLabel = new JLabel("Avg. Node-Edge Dist.:");
+        JLabel areaPerNodeLabel = new JLabel("Space per Node");
         JLabel iterationsSimAnnealLabel = new JLabel ("Iterations: ");
         JTextField lambdaOneTextField = new JTextField("30", 8);
-        JTextField lambdaTwoTextField = new JTextField("20", 8);
-        JTextField lambdaThreeTextField = new JTextField("30", 8);
-        JTextField lambdaFourTextField = new JTextField("20", 8);
+        JTextField lambdaTwoTextField = new JTextField("40", 8);
+        JTextField lambdaThreeTextField = new JTextField("40", 8);
+        JTextField lambdaFourTextField = new JTextField("40", 8);
+        JTextField areaPerNodeTextField = new JTextField("40", 8);
         JTextField iterationsPanelTwoTextField = new JTextField("1000", 8);
         JLabel skipLine = new JLabel(" ");
         JButton executeSimAnneal = new JButton("Execute");
@@ -1012,9 +1014,13 @@ public class MainFrame extends JFrame {
         annealConstraints.insets = new Insets(10, 10, 10, 10);
                
         
+        
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 0;
         simAnneal.add(lambdaInfo, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(lambdaInfoTwo, annealConstraints);
               
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 1;
@@ -1050,35 +1056,42 @@ public class MainFrame extends JFrame {
         
         annealConstraints.gridx = 0;
         annealConstraints.gridy = 6;
+        simAnneal.add(areaPerNodeLabel, annealConstraints);
+        
+        annealConstraints.gridx = 1;
+        simAnneal.add(areaPerNodeTextField, annealConstraints);
+        
+        annealConstraints.gridx = 0;
+        annealConstraints.gridy = 7;
         simAnneal.add(iterationsSimAnnealLabel, annealConstraints);
         
         annealConstraints.gridx = 1;
         simAnneal.add(iterationsPanelTwoTextField, annealConstraints);
         
         annealConstraints.gridx = 0;
-        annealConstraints.gridy = 7;
+        annealConstraints.gridy = 8;
         simAnneal.add(executeSimAnneal, annealConstraints);       
         
         
         executeSimAnneal.addActionListener(new java.awt.event.ActionListener() 
         {
         	public void actionPerformed(ActionEvent evt) 
-        	{
-
-        		
+        	{       		
         		try
-        		{        			
+        		{        	
                     final int iterations = Integer.parseInt(iterationsPanelTwoTextField.getText());
+                    final int area = Integer.parseInt(areaPerNodeTextField.getText());
                     final double lambdaOne = Double.parseDouble(lambdaOneTextField.getText()) / 100;
                     final double lambdaTwo = Double.parseDouble(lambdaTwoTextField.getText()) / 100;
                     final double lambdaThree = Double.parseDouble(lambdaThreeTextField.getText()) / 100;
                     final double lambdaFour = Double.parseDouble(lambdaFourTextField.getText()) / 100;                    
-            		
+            		                                        
             		SimulatedAnnealingAlgorithm sa = new SimulatedAnnealingAlgorithm(view, iterations)
            		 	{
            	            public void calculatePositions()
            	            {
-           	                SimulatedAnnealingFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations);      	            
+           	                SimulatedAnnealingFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations, area);
+           	                //addenergyparameters
            	            }
            		 	};
            		 	
