@@ -1,33 +1,24 @@
 package layout.algo;
 
-import com.yworks.yfiles.algorithms.YPoint;
-import com.yworks.yfiles.algorithms.YVector;
-import com.yworks.yfiles.geometry.PointD;
 import com.yworks.yfiles.graph.IGraph;
-import com.yworks.yfiles.graph.IMapper;
-import com.yworks.yfiles.graph.INode;
-import com.yworks.yfiles.graph.Mapper;
 import com.yworks.yfiles.view.GraphComponent;
-import com.yworks.yfiles.view.ICanvasObject;
-import com.yworks.yfiles.view.ICanvasObjectDescriptor;
 import layout.algo.event.AlgorithmEvent;
 import layout.algo.event.AlgorithmListener;
-import view.visual.VectorVisual;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.WeakHashMap;
 
 /**
- * This abstract class is implemented a framework for simulated-annealing algorithms, in which several different
- * criteria can be evaluated through the method calculatePositions(). The implementation is done using the Runnable
- * interface, where AlgorithmListeners are notified during the execution.
+ * This abstract class is implemented a framework for the crossing resolution algorithm, in which the lowest angle 
+ * belong all edge crossings is searched. Multiple rays are created around one of the vertices, which is involved 
+ * in that crossing. These rays are equally distributed around the node and represent the directions which the node
+ * can be relocated. The implementation is done using the Runnable interface, where AlgorithmListeners are notified 
+ * during the execution.
  *
  * @author Patrick Laipple
  */
-public abstract class SimulatedAnnealingAlgorithm implements Runnable
+public abstract class CrossingResolutionAlgorithm implements Runnable
 {
     protected GraphComponent view;
     protected IGraph graph;
@@ -42,7 +33,7 @@ public abstract class SimulatedAnnealingAlgorithm implements Runnable
      * @param view - an object of type Graph2DView
      * @param maxNoOfIterations - the maximum number of iterations
      */
-    public SimulatedAnnealingAlgorithm(GraphComponent view, int maxNoOfIterations)
+    public CrossingResolutionAlgorithm(GraphComponent view, int maxNoOfIterations)
     {
         this.view = view;
         this.graph = view.getGraph();

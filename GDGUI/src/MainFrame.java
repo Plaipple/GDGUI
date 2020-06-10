@@ -20,6 +20,8 @@ import com.yworks.yfiles.view.export.PixelImageExporter;
 import com.yworks.yfiles.view.input.*;
 import io.ChristianIOHandler;
 import io.SergeyIOHandler;
+import layout.algo.CrossingResolutionAlgorithm;
+import layout.algo.CrossingResolutionFactory;
 import layout.algo.ForceDirectedAlgorithm;
 import layout.algo.ForceDirectedFactory;
 import layout.algo.SimulatedAnnealingAlgorithm;
@@ -1098,7 +1100,6 @@ public class MainFrame extends JFrame {
            	            public void calculatePositions()
            	            {
            	                SimulatedAnnealingFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations, area);
-           	                //addenergyparameters
            	            }
            		 	};
            		 	
@@ -1127,20 +1128,180 @@ public class MainFrame extends JFrame {
                  
         		catch (NumberFormatException exc)
         		{
-        			JOptionPane.showMessageDialog(null, "Incorrect input.\nThe number of iterations will be set to 1000.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+        			JOptionPane.showMessageDialog(null, "Incorrect input.\nOnly integer values are accepted for Space and Iterations", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
         		}
         	}	
         });	
         
+        /*
+         * Declaration of the tab for the settings of the Crossing Resolution Algorithm
+         */
         
-        JPanel random = new JPanel();
-        random.setPreferredSize(new Dimension(250, 300));
-        random.setLayout(new BorderLayout());
+        JPanel crossRes = new JPanel();
+        
+        JLabel numberRaysLabel = new JLabel("Number of Rays:");
+        JLabel relocateMinLabel = new JLabel("Min. Relocation:");
+        JLabel relocateMaxLabel = new JLabel("Max. Relocation:");
+        JLabel iterationsPanelThreeLabel = new JLabel("Iterations:");
+        JLabel localMaximaLabel = new JLabel("Variations for handling");
+        JLabel localMaximaLabel2 = new JLabel("Local Maxima:");
+        JLabel allNodesLabel = new JLabel("Use all Nodes");
+        JLabel doubleValueLabel = new JLabel("Double the Parameters");
+        JLabel iterTillActLabel = new JLabel("Iter. till active");
+        JLabel activeIterLabel = new JLabel("active Iterations ");
+        JTextField numberRaysTextField = new JTextField("8", 8);
+        JTextField relocateMinTextField = new JTextField("30", 8);
+        JTextField relocateMaxTextField = new JTextField("80", 8);
+        JTextField iterTillActTextField = new JTextField("10", 8);
+        JTextField activeIterTextField = new JTextField("10", 8);
+        JTextField iterationsPanelThreeTextField = new JTextField("1000", 8);
+        JCheckBox checkAllNodes = new JCheckBox();
+        checkAllNodes.setSelected(true);
+        JCheckBox checkDoubleValues = new JCheckBox();
+        checkDoubleValues.setSelected(true);
+        JLabel nextLine = new JLabel(" ");
+        JLabel nextLine2 = new JLabel(" ");
+        JButton executeCrossingRes = new JButton("Execute");
+                
+        crossRes.setLayout(new GridBagLayout());
+        crossRes.setPreferredSize(new Dimension(250, 300));
+        GridBagConstraints crossingConstraints = new GridBagConstraints();
+        crossingConstraints.anchor = GridBagConstraints.PAGE_START;
+        crossingConstraints.insets = new Insets(10, 10, 10, 10);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 0;
+        crossRes.add(numberRaysLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(numberRaysTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 1;
+        crossRes.add(relocateMinLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(relocateMinTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 2;
+        crossRes.add(relocateMaxLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(relocateMaxTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 3;
+        crossRes.add(nextLine, crossingConstraints);
+        
+        crossingConstraints.gridy = 4;
+        crossRes.add(localMaximaLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(localMaximaLabel2, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 5;
+        crossRes.add(allNodesLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(checkAllNodes, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 6;
+        crossRes.add(doubleValueLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(checkDoubleValues, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 7;
+        crossRes.add(iterTillActLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(iterTillActTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 8;
+        crossRes.add(activeIterLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(activeIterTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 9;
+        crossRes.add(nextLine2, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 10;
+        crossRes.add(iterationsPanelThreeLabel, crossingConstraints);
+        
+        crossingConstraints.gridx = 1;
+        crossRes.add(iterationsPanelThreeTextField, crossingConstraints);
+        
+        crossingConstraints.gridx = 0;
+        crossingConstraints.gridy = 11;
+        crossRes.add(executeCrossingRes, crossingConstraints);
+        
+        
+        executeCrossingRes.addActionListener(new java.awt.event.ActionListener() 
+        {
+        	public void actionPerformed(ActionEvent evt) 
+        	{     
+        		try
+        		{        	
+        			final int iterations = Integer.parseInt(iterationsPanelThreeTextField.getText());                    
+        			final int numberRays = Integer.parseInt(numberRaysTextField.getText());
+        			final int relocateMin = Integer.parseInt(relocateMinTextField.getText());
+        			final int relocateMax = Integer.parseInt(relocateMaxTextField.getText());
+        			final boolean allNodes = checkAllNodes.isSelected();
+        			final boolean doubleValues = checkDoubleValues.isSelected();
+        			final int iterTillAct = Integer.parseInt(iterTillActTextField.getText());
+        			final int activeIter = Integer.parseInt(activeIterTextField.getText());
+
+        			CrossingResolutionAlgorithm cr = new CrossingResolutionAlgorithm(view, iterations)
+        			{
+        				public void calculatePositions()
+        				{
+        					CrossingResolutionFactory.crossingResolution(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, maxNoOfIterations);
+        				}
+        			};
+
+        			cr.addAlgorithmListener(new AlgorithmListener()
+        			{
+        				public void algorithmStarted(AlgorithmEvent evt) {
+        				}
+
+        				public void algorithmFinished(AlgorithmEvent evt) 
+        				{
+        					progressBar.setValue(0);
+        					view.fitContent();
+        					view.updateUI();
+        				}
+
+        				public void algorithmStateChanged(AlgorithmEvent evt) 
+        				{
+        					progressBar.setValue(evt.currentStatus());
+        				}
+        			});
+        			Thread thread = new Thread(cr);
+        			thread.start();
+        			//this.view.updateUI();
+        			view.updateUI();
+        		}
+        		
+        		catch (NumberFormatException exc)
+        		{
+        			JOptionPane.showMessageDialog(null, "Incorrect input.\nOnly integer values are accepted.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+        		}
+        	}
+        	
+        });	
         
         JTabbedPane tabpane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         tabpane.addTab("Repulsion", repulsion);
         tabpane.addTab("Simul. Anneal.", simAnneal);
-        tabpane.addTab("Random", random);
+        tabpane.addTab("Crossing Res.", crossRes);
         
     	return tabpane;
     }

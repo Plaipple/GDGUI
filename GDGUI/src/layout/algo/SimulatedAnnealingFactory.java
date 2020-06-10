@@ -10,7 +10,8 @@ import com.yworks.yfiles.graph.INode;
 /**
  * Created by laipple on 05/11/20.
  */
-public class SimulatedAnnealingFactory {
+public class SimulatedAnnealingFactory 
+{
 
     /**
      * Calculate energy function for the Davidson Harel Simulated Annealing
@@ -19,7 +20,7 @@ public class SimulatedAnnealingFactory {
      * @param lambdaTwo - the importance of the borderline positions
      * @param lambdaThree - the importance of average edge lengths
      * @param lambdaFour - the importance of distances between nodes and edges
-     * @param map - the NodeMap, where the calculated forces will be stored (might be non-empty).
+     * @param area - the area that the graph is allowed to use per node
      */
     
 	//Declaration of static Variables which are also needed to be saved between the iterations
@@ -61,15 +62,32 @@ public class SimulatedAnnealingFactory {
     		}
     		
     		//The bottom and right bound are set dynamically depending on how many nodes 
-    		//the graph has. The factor can be set in the panel for the SA Algorithm
+    		//the graph has. The factor 'area' can be set in the panel for the SA Algorithm
     		double dynamic_bound_bottom = bound_top + (area * graph.getNodes().size());
     		double dynamic_bound_right = bound_left + (area * graph.getNodes().size());
+    		double graph_center;
     		
     		//Don't take the dynamic values if they are greater than the position of the most outside node
     		//Because it could happen that nodes of the initial graph are placed outside the dynamic bounds
     		//Then these are ignored while running the algorithm and do not change their positions
-    		if (dynamic_bound_bottom > bound_bottom) bound_bottom = dynamic_bound_bottom;
-    		if (dynamic_bound_right > bound_right) bound_right = dynamic_bound_right;
+    		if (dynamic_bound_bottom > bound_bottom)
+    		{
+    			//calculate the center of the graph's y-axis. Then add half the value of the 
+    			//dynamic space for the bottom and subtract half of it for the top
+    			graph_center = bound_top + (bound_bottom - bound_top) / 2;
+    			bound_bottom = graph_center + (dynamic_bound_bottom - bound_top) / 2;
+    			bound_top = graph_center - (dynamic_bound_bottom - bound_top) / 2;
+    		}
+    		
+    		if (dynamic_bound_right > bound_right)
+    		{
+    			//same as above except it procedures now for the x-axis
+    			graph_center = bound_left + (bound_right - bound_left) / 2;
+    			bound_right = graph_center + (dynamic_bound_right - bound_left) / 2;
+    			bound_left = graph_center - (dynamic_bound_right - bound_left) / 2;
+    		}
+    		
+    		
     	}
 
     	//Calculate the energy function of the initial graph layout
