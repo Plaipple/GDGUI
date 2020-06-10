@@ -40,7 +40,7 @@ public class CrossingResolutionFactory
 		}
 				
 		INode intersectionNodes[] = calculateMinAngleNodes(graph, nodePositions);
-		
+		if (intersectionNodes[0] == null) return;
 		// Alternative Modus if there has been no changes for the last 'iterTillAct' Iterations
 		if (unchangeTrials >= iterTillAct)
 		{					
@@ -61,7 +61,7 @@ public class CrossingResolutionFactory
 			altModeTrials++;
 		}
 		//----------------------------------------------------------------------------------------
-		
+
 		for (int k = 0; k < intersectionNodes.length; k++)
 		{
 			System.out.println(intersectionNodes[k].toString());

@@ -1258,36 +1258,43 @@ public class MainFrame extends JFrame {
         			final boolean doubleValues = checkDoubleValues.isSelected();
         			final int iterTillAct = Integer.parseInt(iterTillActTextField.getText());
         			final int activeIter = Integer.parseInt(activeIterTextField.getText());
-
-        			CrossingResolutionAlgorithm cr = new CrossingResolutionAlgorithm(view, iterations)
+        			
+        			if(relocateMin > relocateMax)
         			{
-        				public void calculatePositions()
+        				JOptionPane.showMessageDialog(null, "Incorrect input.\nMin Value greater than Max Value.", "Incorrect Input", JOptionPane.ERROR_MESSAGE);
+        			}
+        			else
+        			{	
+        				CrossingResolutionAlgorithm cr = new CrossingResolutionAlgorithm(view, iterations)
         				{
-        					CrossingResolutionFactory.crossingResolution(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, maxNoOfIterations);
-        				}
-        			};
+        					public void calculatePositions()
+        					{
+        						CrossingResolutionFactory.crossingResolution(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, maxNoOfIterations);
+        					}
+        				};       			
 
-        			cr.addAlgorithmListener(new AlgorithmListener()
-        			{
-        				public void algorithmStarted(AlgorithmEvent evt) {
-        				}
-
-        				public void algorithmFinished(AlgorithmEvent evt) 
+        				cr.addAlgorithmListener(new AlgorithmListener()
         				{
-        					progressBar.setValue(0);
-        					view.fitContent();
-        					view.updateUI();
-        				}
+        					public void algorithmStarted(AlgorithmEvent evt) {
+        					}
 
-        				public void algorithmStateChanged(AlgorithmEvent evt) 
-        				{
-        					progressBar.setValue(evt.currentStatus());
-        				}
-        			});
-        			Thread thread = new Thread(cr);
-        			thread.start();
-        			//this.view.updateUI();
-        			view.updateUI();
+        					public void algorithmFinished(AlgorithmEvent evt) 
+        					{
+        						progressBar.setValue(0);
+        						view.fitContent();
+        						view.updateUI();
+        					}
+
+        					public void algorithmStateChanged(AlgorithmEvent evt) 
+        					{
+        						progressBar.setValue(evt.currentStatus());
+        					}
+        				});
+        				Thread thread = new Thread(cr);
+        				thread.start();
+        				//this.view.updateUI();
+        				view.updateUI();
+        			}
         		}
         		
         		catch (NumberFormatException exc)
