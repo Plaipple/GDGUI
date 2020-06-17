@@ -18,7 +18,7 @@ import java.util.List;
  *
  * @author Patrick Laipple
  */
-public abstract class CrossingResolutionAlgorithm implements Runnable
+public abstract class RandomMovementAlgorithm implements Runnable
 {
     protected GraphComponent view;
     protected IGraph graph;
@@ -33,7 +33,7 @@ public abstract class CrossingResolutionAlgorithm implements Runnable
      * @param view - an object of type Graph2DView
      * @param maxNoOfIterations - the maximum number of iterations
      */
-    public CrossingResolutionAlgorithm(GraphComponent view, int maxNoOfIterations)
+    public RandomMovementAlgorithm(GraphComponent view, int maxNoOfIterations)
     {
         this.view = view;
         this.graph = view.getGraph();

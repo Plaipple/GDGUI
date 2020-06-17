@@ -20,10 +20,10 @@ import com.yworks.yfiles.view.export.PixelImageExporter;
 import com.yworks.yfiles.view.input.*;
 import io.ChristianIOHandler;
 import io.SergeyIOHandler;
-import layout.algo.CrossingResolutionAlgorithm;
-import layout.algo.CrossingResolutionFactory;
 import layout.algo.ForceDirectedAlgorithm;
 import layout.algo.ForceDirectedFactory;
+import layout.algo.RandomMovementAlgorithm;
+import layout.algo.RandomMovementFactory;
 import layout.algo.SimulatedAnnealingAlgorithm;
 import layout.algo.SimulatedAnnealingFactory;
 import layout.algo.event.AlgorithmEvent;
@@ -1137,7 +1137,7 @@ public class MainFrame extends JFrame {
          * Declaration of the tab for the settings of the Crossing Resolution Algorithm
          */
         
-        JPanel crossRes = new JPanel();
+        JPanel randMov = new JPanel();
         
         JLabel numberRaysLabel = new JLabel("Number of Rays:");
         JLabel relocateMinLabel = new JLabel("Min. Relocation:");
@@ -1150,8 +1150,8 @@ public class MainFrame extends JFrame {
         JLabel iterTillActLabel = new JLabel("Iter. till active");
         JLabel activeIterLabel = new JLabel("active Iterations ");
         JTextField numberRaysTextField = new JTextField("8", 8);
-        JTextField relocateMinTextField = new JTextField("30", 8);
-        JTextField relocateMaxTextField = new JTextField("80", 8);
+        JTextField relocateMinTextField = new JTextField("20", 8);
+        JTextField relocateMaxTextField = new JTextField("40", 8);
         JTextField iterTillActTextField = new JTextField("10", 8);
         JTextField activeIterTextField = new JTextField("10", 8);
         JTextField iterationsPanelThreeTextField = new JTextField("1000", 8);
@@ -1163,85 +1163,86 @@ public class MainFrame extends JFrame {
         JLabel nextLine2 = new JLabel(" ");
         JButton executeCrossingRes = new JButton("Execute");
                 
-        crossRes.setLayout(new GridBagLayout());
-        crossRes.setPreferredSize(new Dimension(250, 300));
-        GridBagConstraints crossingConstraints = new GridBagConstraints();
-        crossingConstraints.anchor = GridBagConstraints.PAGE_START;
-        crossingConstraints.insets = new Insets(10, 10, 10, 10);
+        randMov.setLayout(new GridBagLayout());
+        randMov.setPreferredSize(new Dimension(250, 300));
+        GridBagConstraints randMovConstraints = new GridBagConstraints();
+        randMovConstraints.anchor = GridBagConstraints.PAGE_START;
+        randMovConstraints.insets = new Insets(10, 10, 10, 10);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 0;
-        crossRes.add(numberRaysLabel, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 0;
+        randMov.add(numberRaysLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(numberRaysTextField, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(numberRaysTextField, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 1;
-        crossRes.add(relocateMinLabel, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 1;
+        randMov.add(relocateMinLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(relocateMinTextField, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(relocateMinTextField, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 2;
-        crossRes.add(relocateMaxLabel, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 2;
+        randMov.add(relocateMaxLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(relocateMaxTextField, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(relocateMaxTextField, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 3;
-        crossRes.add(nextLine, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 3;
+        randMov.add(nextLine, randMovConstraints);
         
-        crossingConstraints.gridy = 4;
-        crossRes.add(localMaximaLabel, crossingConstraints);
+        randMovConstraints.gridy = 4;
+        randMov.add(localMaximaLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(localMaximaLabel2, crossingConstraints);
+        randMovConstraints.gridx = 1;
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 5;
-        crossRes.add(allNodesLabel, crossingConstraints);
+        randMov.add(localMaximaLabel2, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(checkAllNodes, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 5;
+        randMov.add(allNodesLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 6;
-        crossRes.add(doubleValueLabel, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(checkAllNodes, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(checkDoubleValues, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 6;
+        randMov.add(doubleValueLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 7;
-        crossRes.add(iterTillActLabel, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(checkDoubleValues, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(iterTillActTextField, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 7;
+        randMov.add(iterTillActLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 8;
-        crossRes.add(activeIterLabel, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(iterTillActTextField, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(activeIterTextField, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 8;
+        randMov.add(activeIterLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 9;
-        crossRes.add(nextLine2, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(activeIterTextField, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 10;
-        crossRes.add(iterationsPanelThreeLabel, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 9;
+        randMov.add(nextLine2, randMovConstraints);
         
-        crossingConstraints.gridx = 1;
-        crossRes.add(iterationsPanelThreeTextField, crossingConstraints);
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 10;
+        randMov.add(iterationsPanelThreeLabel, randMovConstraints);
         
-        crossingConstraints.gridx = 0;
-        crossingConstraints.gridy = 11;
-        crossRes.add(executeCrossingRes, crossingConstraints);
+        randMovConstraints.gridx = 1;
+        randMov.add(iterationsPanelThreeTextField, randMovConstraints);
+        
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 11;
+        randMov.add(executeCrossingRes, randMovConstraints);
         
         
         executeCrossingRes.addActionListener(new java.awt.event.ActionListener() 
@@ -1265,11 +1266,11 @@ public class MainFrame extends JFrame {
         			}
         			else
         			{	
-        				CrossingResolutionAlgorithm cr = new CrossingResolutionAlgorithm(view, iterations)
+        				RandomMovementAlgorithm cr = new RandomMovementAlgorithm(view, iterations)
         				{
         					public void calculatePositions()
         					{
-        						CrossingResolutionFactory.crossingResolution(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, maxNoOfIterations);
+        						RandomMovementFactory.randomMovement(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, maxNoOfIterations);
         					}
         				};       			
 
@@ -1308,7 +1309,7 @@ public class MainFrame extends JFrame {
         JTabbedPane tabpane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
         tabpane.addTab("Repulsion", repulsion);
         tabpane.addTab("Simul. Anneal.", simAnneal);
-        tabpane.addTab("Crossing Res.", crossRes);
+        tabpane.addTab("Rand. Mov.", randMov);
         
     	return tabpane;
     }

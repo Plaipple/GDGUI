@@ -148,7 +148,7 @@ public class SimulatedAnnealingFactory
     	}
     	
     	index ++;
-    	if (temperature <= 1) index = 0;	
+    	if (temperature <= 1) index = 0;
     }
     
     public static double calculateEnergyFunction(IGraph graph, double lambdaOne, double lambdaTwo, double lambdaThree, double lambdaFour, PointD nodePositions[])
