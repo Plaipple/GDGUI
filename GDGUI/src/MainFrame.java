@@ -1150,8 +1150,8 @@ public class MainFrame extends JFrame {
         JLabel iterTillActLabel = new JLabel("Iter. till active");
         JLabel activeIterLabel = new JLabel("active Iterations ");
         JTextField numberRaysTextField = new JTextField("8", 8);
-        JTextField relocateMinTextField = new JTextField("20", 8);
-        JTextField relocateMaxTextField = new JTextField("40", 8);
+        JTextField relocateMinTextField = new JTextField("40", 8);
+        JTextField relocateMaxTextField = new JTextField("100", 8);
         JTextField iterTillActTextField = new JTextField("10", 8);
         JTextField activeIterTextField = new JTextField("10", 8);
         JTextField iterationsPanelThreeTextField = new JTextField("1000", 8);
