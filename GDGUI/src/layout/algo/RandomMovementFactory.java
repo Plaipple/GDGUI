@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.yworks.yfiles.algorithms.LineSegment;
+import com.yworks.yfiles.algorithms.ShortestPaths;
 import com.yworks.yfiles.algorithms.YPoint;
 import com.yworks.yfiles.algorithms.YVector;
 import com.yworks.yfiles.geometry.PointD;
@@ -32,7 +33,7 @@ public class RandomMovementFactory
 	static double minAngle = Double.POSITIVE_INFINITY;
 	static int unchangeTrials = 0;
 	static int altModeTrials = 0;
-	static double boundThreshold = 100;
+	static double boundThreshold = 20;
 	static double bound_top = Double.POSITIVE_INFINITY;
 	static double bound_bottom = Double.NEGATIVE_INFINITY;
 	static double bound_left = Double.POSITIVE_INFINITY;
@@ -40,12 +41,16 @@ public class RandomMovementFactory
 	static PointD[] nodePositions;
 	static boolean[][] edgeCrossings;
 	static double[] nodeAngles;
+	static double[][][] shortestPaths;
 	static double energy = 0;
 	static int index = 0;
 	static INode angularNode;
 	static INode nodeEdgeNode;
+	static double longestEdge = Double.NEGATIVE_INFINITY;
+	static double shortestEdge = Double.POSITIVE_INFINITY;
+	static INode[] edgeLengthRatioNodes = new INode[4];
 	
-	public static void randomMovement(IGraph graph, int numberRays, int relocateMin, int relocateMax, boolean allNodes, boolean doubleValues, int iterTillAct, int activeIter,/* boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct,*/ int iterations)
+	public static void randomMovement(IGraph graph, int numberRays, int relocateMin, int relocateMax, boolean allNodes, boolean doubleValues, int iterTillAct, int activeIter, boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct, int iterations)
 	{		
 		if (index == 0)
 		{				
@@ -55,7 +60,7 @@ public class RandomMovementFactory
 			
 			nodePositions = initNodeMap(graph, nodePositions);
 			edgeCrossings = initEdgeMap(graph, edgeCrossings);
-			energy = calculateInitEnergy(graph, edgeCrossings, nodePositions, nodeAngles);
+			energy = calculateInitEnergy(graph, edgeCrossings, nodePositions, nodeAngles, crossResAct, angResAct, numbCrossAct, nodeEdgeResAct, edgeLengthRatioAct);
 		}
 		
 		if ((iterations  - index) == 1)
@@ -64,12 +69,11 @@ public class RandomMovementFactory
 		}
 		
 		INode crossingNodes[] = new INode[4];
-		crossingNodes = calculateMinAngleNodes(graph, nodePositions);
-		//INode[] intersectionNodes = buildCriticalVerticesArray(crossingNodes, angularNode, nodeEdgeNode, crossResAct, angResAct, nodeEdgeResAct);
-		INode[] intersectionNodes = buildCriticalVerticesArray(crossingNodes, angularNode, nodeEdgeNode, false, false, true);
+		if (crossResAct) crossingNodes = calculateMinAngleNodes(graph, nodePositions);
+		INode[] intersectionNodes = buildCriticalVerticesArray(crossingNodes, angularNode, nodeEdgeNode, crossResAct, angResAct, nodeEdgeResAct, edgeLengthRatioAct);
 		
 		
-		if (intersectionNodes[0] == null)
+		if (intersectionNodes.length == 0 || intersectionNodes[0] == null)
 		{
 			index ++;
 			if (index >= iterations) index = 0;
@@ -98,10 +102,11 @@ public class RandomMovementFactory
 		//----------------------------------------------------------------------------------------
 
 		
-		for (int k = 0; k < intersectionNodes.length; k++)
+	/*	for (int k = 0; k < intersectionNodes.length; k++)
 		{
 			System.out.println(intersectionNodes[k].toString());
 		}
+		System.out.println();*/
 		
 		
 		int chosenNode = (int)(Math.random() * intersectionNodes.length);
@@ -116,10 +121,12 @@ public class RandomMovementFactory
 		double currentEnergy = energy;
 		boolean[][] edgeCrossingsSave = edgeCrossings;
 		double[] nodeAnglesSave = nodeAngles;
+		INode[] edgeLengthRatioNodesSave = edgeLengthRatioNodes;
 		INode saveAngularNode = angularNode;
 		INode saveNodeEdgeNode = nodeEdgeNode;
 		INode bestNodeEdgeNode = nodeEdgeNode;
-				
+		double longestEdgeSave = longestEdge;
+		double shortestEdgeSave = shortestEdge;
 		
 		for (int i = 0; i < numberRays; i++)			
 		{
@@ -127,11 +134,11 @@ public class RandomMovementFactory
 			basicVec = basicVec.rotate(2 * Math.PI / numberRays);
 			n_new = new PointD(basicVec.getX() + n.getLayout().getCenter().x, basicVec.getY() + n.getLayout().getCenter().y);
 			
-			//if(n_new.x > bound_right - boundThreshold || n_new.x < bound_left + boundThreshold || n_new.y > bound_bottom - boundThreshold || n_new.y < bound_top + boundThreshold) continue;
+			if(n_new.x > bound_right - boundThreshold || n_new.x < bound_left + boundThreshold || n_new.y > bound_bottom - boundThreshold || n_new.y < bound_top + boundThreshold) continue;
 			
 			nodePositions[(int)n.getTag()] = n_new;
 			
-			energyNew = calculatePositionEnergy(graph, nodePositions, edgeCrossings, nodeAngles, n, n_new);
+			energyNew = calculatePositionEnergy(graph, nodePositions, edgeCrossings, nodeAngles, n, n_new, crossResAct, angResAct, numbCrossAct, nodeEdgeResAct, edgeLengthRatioAct);
 			if (energyNew > energy)
 			{
 				n_new_best = n_new;
@@ -143,6 +150,9 @@ public class RandomMovementFactory
 			nodeAngles = nodeAnglesSave;
 			angularNode = saveAngularNode;
 			nodeEdgeNode = saveNodeEdgeNode;
+			edgeLengthRatioNodes = edgeLengthRatioNodesSave;
+			shortestEdge = shortestEdgeSave;
+			longestEdge = longestEdgeSave;
 		
 			basicVec.norm();
 		
@@ -163,9 +173,14 @@ public class RandomMovementFactory
 			
 			edgeCrossings = edgeCrossingsNew(graph, edgeCrossings, n, nodePositions);
 			
-			INode[] criticalVertices = consideredVerticesNew(graph, n);
-			angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
+			if (edgeLengthRatioAct) edgeLengthRatioEnergy(graph, n);
 			
+			if (angResAct)
+			{
+				INode[] criticalVertices = consideredVerticesNew(graph, n);
+				angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);				
+			}
+
 			nodeEdgeNode = bestNodeEdgeNode;
 			
 			if (altModeTrials >= activeIter)
@@ -194,51 +209,73 @@ public class RandomMovementFactory
 	}
 	
 	
-	public static double calculatePositionEnergy(IGraph graph, PointD[] nodePositions, boolean[][] edgeCrossings, double[] nodeAngles, INode n, PointD n_p)
+	public static double calculatePositionEnergy(IGraph graph, PointD[] nodePositions, boolean[][] edgeCrossings, double[] nodeAngles, INode n, PointD n_p, boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct)
 	{
 		double energy = 0;
-		//edgeCrossings = edgeCrossingsNew(graph, edgeCrossings, n, nodePositions);
-		//energy += edgeCrossingsEnergy(graph, edgeCrossings);
 		
-		//energy += crossingResolutionEnergy(graph, nodePositions);
+		if (numbCrossAct)
+		{
+			edgeCrossings = edgeCrossingsNew(graph, edgeCrossings, n, nodePositions);
+			energy += edgeCrossingsEnergy(graph, edgeCrossings);
+		}
+
 		
-		//INode[] criticalVertices = consideredVerticesNew(graph, n);
-		//energy += angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
+		if (crossResAct) 
+			energy += crossingResolutionEnergy(graph, nodePositions);
 		
-		energy += nodeEdgeDistanceEnergy(graph);
+		if (angResAct)
+		{
+			INode[] criticalVertices = consideredVerticesNew(graph, n);
+			energy += angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
+		}
+		
+		if (nodeEdgeResAct) 
+			energy += nodeEdgeDistanceEnergy(graph);
+		
+		if (edgeLengthRatioAct)
+			energy += edgeLengthRatioEnergy(graph, n);
+		
 		return energy;
 	}
 	
 	
-	public static double calculateInitEnergy(IGraph graph, boolean[][] edgeCrossings, PointD[] nodePositions, double[] nodeAngles)
+	public static double calculateInitEnergy(IGraph graph, boolean[][] edgeCrossings, PointD[] nodePositions, double[] nodeAngles, boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct)
 	{
 		double energy = 0;
 		int nodeNumber = 0;
 		
-		INode[] criticalNodes = new INode[graph.getNodes().size()];
-		for (INode n : graph.getNodes())
+		if (numbCrossAct) energy += edgeCrossingsEnergy(graph, edgeCrossings);
+		if (crossResAct) energy += crossingResolutionEnergy(graph, nodePositions);
+		
+		if (angResAct)
 		{
-			criticalNodes[nodeNumber] = n;
-			nodeNumber ++;
+			INode[] criticalNodes = new INode[graph.getNodes().size()];
+			for (INode n : graph.getNodes())
+			{
+				criticalNodes[nodeNumber] = n;
+				nodeNumber ++;				
+			}
+			
+			energy += angularResolutionEnergy(graph, nodePositions, criticalNodes, nodeAngles);
 		}
 		
-		//energy += edgeCrossingsEnergy(graph, edgeCrossings);
-		//energy += crossingResolutionEnergy(graph, nodePositions);
-		//energy += angularResolutionEnergy(graph, nodePositions, criticalNodes, nodeAngles);
-		energy += nodeEdgeDistanceEnergy(graph);
+		if (nodeEdgeResAct) energy += nodeEdgeDistanceEnergy(graph);
+		
+		if (edgeLengthRatioAct) energy += edgeLengthRatioEnergy(graph, graph.getNodes().first());
 		return energy;
 	}
 	
-	public static INode[] buildCriticalVerticesArray(INode[] crossingNodes, INode angularNode, INode nodeEdgeNode, boolean crossResAct, boolean angResAct, boolean nodeEdgeResAct)
+	public static INode[] buildCriticalVerticesArray(INode[] crossingNodes, INode angularNode, INode nodeEdgeNode, boolean crossResAct, boolean angResAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct)
 	{
 		int index = 0;
 		int arraylength = 0;
-		if (crossResAct) arraylength += 4;
+		if (crossResAct && crossingNodes[0] != null) arraylength += 4;
 		if (angResAct) arraylength += 1;
 		if (nodeEdgeResAct) arraylength += 1;
+		if (edgeLengthRatioAct) arraylength += 4;
 		INode criticalVertices[] = new INode[arraylength];
 		
-		if (crossResAct)
+		if (crossResAct && crossingNodes[0] != null)
 		{
 			for (int i = 0; i < crossingNodes.length; i++)
 			{
@@ -257,6 +294,15 @@ public class RandomMovementFactory
 		{
 			criticalVertices[index] = nodeEdgeNode;
 			index ++;
+		}
+		
+		if (edgeLengthRatioAct)
+		{
+			for (int i = 0; i < edgeLengthRatioNodes.length; i++)
+			{
+				criticalVertices[i + index] = edgeLengthRatioNodes[i];
+			}
+			index += 4;
 		}
 		
 		return criticalVertices;
@@ -389,6 +435,7 @@ public class RandomMovementFactory
 		for (INode i : graph.getNodes())
 		{   
 			i.setTag(nodeNumber);
+			
 			bound_top = Math.min(i.getLayout().getCenter().y, bound_top);
 			bound_bottom = Math.max(i.getLayout().getCenter().y, bound_bottom);
 			bound_left = Math.min(i.getLayout().getCenter().x, bound_left);
@@ -396,6 +443,26 @@ public class RandomMovementFactory
 			nodePositions[(int)i.getTag()] = new PointD(i.getLayout().getCenter().x, i.getLayout().getCenter().y);
 			nodeNumber ++;
 		}
+		
+		double dynamic_bound_bottom = bound_top + (40 * graph.getNodes().size());
+		double dynamic_bound_right = bound_left + (40 * graph.getNodes().size());
+		double graph_center;
+		
+		if (dynamic_bound_bottom > bound_bottom)
+		{
+			graph_center = bound_top + (bound_bottom - bound_top) / 2;
+			bound_bottom = graph_center + (dynamic_bound_bottom - bound_top) / 2;
+			bound_top = graph_center - (dynamic_bound_bottom - bound_top) / 2;
+		}
+		
+		if (dynamic_bound_right > bound_right)
+		{
+			graph_center = bound_left + (bound_right - bound_left) / 2;
+			bound_right = graph_center + (dynamic_bound_right - bound_left) / 2;
+			bound_left = graph_center - (dynamic_bound_right - bound_left) / 2;
+		}
+		
+		
 		return nodePositions;
 	}
 	
@@ -410,11 +477,24 @@ public class RandomMovementFactory
 		}
 		
 		for (IEdge e : graph.getEdges())
-		{
-			
+		{			
 			YPoint e_s = new YPoint(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y);
 			YPoint e_t = new YPoint(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y);
 			
+			if (YPoint.distance(e_s, e_t) < shortestEdge)
+			{
+				shortestEdge = YPoint.distance(e_s, e_t);
+				edgeLengthRatioNodes[0] = e.getSourceNode();
+				edgeLengthRatioNodes[1] = e.getTargetNode();
+			}
+			
+			if (YPoint.distance(e_s, e_t) > longestEdge) 
+			{
+				longestEdge = YPoint.distance(e_s, e_t);
+				edgeLengthRatioNodes[2] = e.getSourceNode();
+				edgeLengthRatioNodes[3] = e.getTargetNode();
+			}
+
 			for (IEdge i : graph.getEdges())
 			{
 				if (i == e) continue;
@@ -433,6 +513,24 @@ public class RandomMovementFactory
 		}
 		
 		return edgeCrossings;
+	}
+	
+	public static double[][][] initShortestPaths (IGraph graph, double[][][] shortestPaths)
+	{
+		shortestPaths = new double[graph.getNodes().size()][graph.getNodes().size()][2];
+		for (INode n : graph.getNodes())
+		{
+			YPoint n_yp = new YPoint(nodePositions[(int)n.getTag()].x, nodePositions[(int)n.getTag()].y);
+			for (INode q : graph.getNodes())
+			{
+				if (q.getTag() == n.getTag()) continue;
+				YPoint q_yp = new YPoint(nodePositions[(int)q.getTag()].x, nodePositions[(int)q.getTag()].y);
+				shortestPaths[(int)n.getTag()][(int)q.getTag()][1] = YPoint.distance(n_yp, q_yp);
+		    	//ShortestPaths.kShortestPaths(arg0, arg1, arg2, arg3, arg4);
+				//ShortestPath sssp = new ShortestPath();
+			}
+		}
+		return shortestPaths;
 	}
 	
 	public static INode[] consideredVerticesNew (IGraph graph, INode n)
@@ -674,4 +772,33 @@ public class RandomMovementFactory
     	nodeEdgeDistanceEnergy = (shortestDistance / (graph.getNodes().size() * 40));
     	return nodeEdgeDistanceEnergy;
     }
+	
+	
+	public static double edgeLengthRatioEnergy (IGraph graph, INode n)
+	{
+		double edgeLengthRatioEnergy = 0;
+		IListEnumerable<IPort> nPorts = n.getPorts();
+		for (IPort p : nPorts)
+		{
+			for (IEdge e : graph.edgesAt(p, AdjacencyTypes.ALL))
+			{
+				double currentDistance = YPoint.distance(new YPoint(nodePositions[(int)e.getSourceNode().getTag()].x, nodePositions[(int)e.getSourceNode().getTag()].y), new YPoint(nodePositions[(int)e.getTargetNode().getTag()].x, nodePositions[(int)e.getTargetNode().getTag()].y));
+				if (currentDistance > shortestEdge && (n == edgeLengthRatioNodes[0] || n == edgeLengthRatioNodes[1]))
+				{
+					shortestEdge = currentDistance;
+					edgeLengthRatioNodes[0] = e.getSourceNode();
+					edgeLengthRatioNodes[1] = e.getTargetNode();
+				}
+				if (currentDistance < longestEdge && (n == edgeLengthRatioNodes[2] || n == edgeLengthRatioNodes[3]))
+				{
+					longestEdge = currentDistance;
+					edgeLengthRatioNodes[2] = e.getSourceNode();
+					edgeLengthRatioNodes[3] = e.getTargetNode();
+				}
+			}
+		}
+
+        edgeLengthRatioEnergy = 1 / (longestEdge / shortestEdge);
+		return edgeLengthRatioEnergy;
+	}
 }
