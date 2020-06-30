@@ -229,9 +229,15 @@ public class Experiment
                     view.requestFocus();
                     startTime = System.currentTimeMillis();
                     //Then, run the Simulated Annealing algorithm
-                    layout.algo.SimulatedAnnealingAlgorithm simAnneal = new layout.algo.SimulatedAnnealingAlgorithm(view, 1000) {
-                        public void calculatePositions() {
-                            layout.algo.SimulatedAnnealingFactory.simulatedAnnealing(graph, 0.3, 0.5, 0.4, 0.4, maxNoOfIterations, 40);
+                    layout.algo.SimulatedAnnealingAlgorithm simAnneal = new layout.algo.SimulatedAnnealingAlgorithm(view, 1000, 40) {
+                        public double calculateEnergyFunction() {
+                        	double energy = 0;		
+            		    	if (0.3 != 0) energy += SimulatedAnnealingFactory.calculateNodeNodeDistances(graph, 0.3, nodePositions);
+            		    	//if (0.4 != 0) energy += SimulatedAnnealingFactory.calculateBorderlinePositions(graph, 0.4);
+            		    	if (0.4 != 0) energy += SimulatedAnnealingFactory.calculateCrossingNumber(graph, 0.4);
+            		    	if (0.4 != 0) energy += SimulatedAnnealingFactory.calculateAvgEdgeLength(graph, 0.4, nodePositions);
+            		    	if (0.4 != 0) energy += SimulatedAnnealingFactory.calculateNodeEdgeDistances(graph, 0.4, nodePositions);
+            		    	return energy;
                         }
                     };
           			

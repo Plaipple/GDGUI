@@ -1095,12 +1095,21 @@ public class MainFrame extends JFrame {
                     final double lambdaThree = Double.parseDouble(lambdaThreeTextField.getText()) / 100;
                     final double lambdaFour = Double.parseDouble(lambdaFourTextField.getText()) / 100;                    
             		                                        
-            		SimulatedAnnealingAlgorithm sa = new SimulatedAnnealingAlgorithm(view, iterations)
+            		SimulatedAnnealingAlgorithm sa = new SimulatedAnnealingAlgorithm(view, iterations, area)
            		 	{
-           	            public void calculatePositions()
-           	            {
-           	                SimulatedAnnealingFactory.simulatedAnnealing(graph, lambdaOne, lambdaTwo, lambdaThree, lambdaFour, maxNoOfIterations, area);
-           	            }
+            		    public double calculateEnergyFunction()
+            		    {
+            		    	if (lambdaOne == 0 && lambdaTwo == 0 && lambdaThree == 0 && lambdaFour == 0) return 0;
+            		    	
+            				double energy = 0;		
+            		    	if (lambdaOne != 0) energy += SimulatedAnnealingFactory.calculateNodeNodeDistances(graph, lambdaOne, nodePositions);
+            		    	//if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateBorderlinePositions(graph, lambdaTwo);
+            		    	if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateCrossingNumber(graph, lambdaTwo);
+            		    	if (lambdaThree != 0) energy += SimulatedAnnealingFactory.calculateAvgEdgeLength(graph, lambdaThree, nodePositions);
+            		    	if (lambdaFour != 0) energy += SimulatedAnnealingFactory.calculateNodeEdgeDistances(graph, lambdaFour, nodePositions);
+            		    	return energy;
+            		    }
+
            		 	};
            		 	
            		 	sa.addAlgorithmListener(new AlgorithmListener()
