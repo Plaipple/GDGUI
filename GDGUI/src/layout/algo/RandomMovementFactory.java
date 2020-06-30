@@ -68,14 +68,9 @@ public class RandomMovementFactory
 			energy = calculateInitEnergy(graph, edgeCrossings, nodePositions, nodeAngles, crossResAct, angResAct, numbCrossAct, nodeEdgeResAct, edgeLengthRatioAct, stressAct);
 		}
 		
-		if ((iterations  - index) == 1)
-		{
-			System.out.println("Ende");
-		}
-		
 		INode crossingNodes[] = new INode[4];
 		if (crossResAct) crossingNodes = calculateMinAngleNodes(graph, nodePositions);
-		INode[] intersectionNodes = buildCriticalVerticesArray(crossingNodes, angularNode, nodeEdgeNode, crossResAct, angResAct, nodeEdgeResAct, edgeLengthRatioAct);
+		INode[] intersectionNodes = buildCriticalVerticesArray(graph, crossingNodes, angularNode, nodeEdgeNode, crossResAct, angResAct, nodeEdgeResAct, edgeLengthRatioAct);
 		
 		
 		if (intersectionNodes.length == 0 || intersectionNodes[0] == null)
@@ -84,6 +79,7 @@ public class RandomMovementFactory
 			if (index >= iterations) index = 0;
 			return;
 		}
+		
 		
 		// Alternative Mode if there has been no changes for the last 'iterTillAct' Iterations
 		if (unchangeTrials >= iterTillAct)
@@ -116,6 +112,8 @@ public class RandomMovementFactory
 		
 		int chosenNode = (int)(Math.random() * intersectionNodes.length);
 		INode n = intersectionNodes[chosenNode];
+		double positionradiusMax;
+		double positionradiusMin;
 		
 		YVector basicVec = new YVector(0, -1);
 		double randomRot = Math.random() * (2 * Math.PI);
@@ -136,8 +134,11 @@ public class RandomMovementFactory
 		
 		for (int i = 0; i < numberRays; i++)			
 		{
-			basicVec.scale((int)(Math.random() * (relocateMax + 1)) + relocateMin);
+			positionradiusMax = relocateMax * (iterations - index) / iterations;
+			positionradiusMin = relocateMin * (iterations - index) / iterations;
+			basicVec.scale((int)(Math.random() * (positionradiusMax + 1)) + positionradiusMin);
 			basicVec = basicVec.rotate(2 * Math.PI / numberRays);
+			
 			n_new = new PointD(basicVec.getX() + n.getLayout().getCenter().x, basicVec.getY() + n.getLayout().getCenter().y);
 			
 			if(n_new.x > bound_right - boundThreshold || n_new.x < bound_left + boundThreshold || n_new.y > bound_bottom - boundThreshold || n_new.y < bound_top + boundThreshold) continue;
@@ -221,6 +222,9 @@ public class RandomMovementFactory
 	public static double calculatePositionEnergy(IGraph graph, PointD[] nodePositions, boolean[][] edgeCrossings, double[] nodeAngles, double[][][] shortestPaths, INode n, PointD n_p, boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct, boolean stressAct)
 	{
 		double energy = 0;
+		PointD old_n_p = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
+		INode n_copy = graph.createNode(n);
+		graph.setNodeCenter(n_copy, n_p);		
 		
 		if (numbCrossAct)
 		{
@@ -238,7 +242,8 @@ public class RandomMovementFactory
 			energy += angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
 		}
 		
-		if (nodeEdgeResAct) 
+		graph.remove(n_copy);
+		if (nodeEdgeResAct)
 			energy += nodeEdgeDistanceEnergy(graph);
 		
 		if (edgeLengthRatioAct)
@@ -249,8 +254,7 @@ public class RandomMovementFactory
 			shortestPaths = shortestPathsNew(graph, shortestPaths, n, nodePositions);
 			energy += stressEnergy(graph, shortestPaths);
 		}
-
-		
+	
 		return energy;
 	}
 	
@@ -283,14 +287,16 @@ public class RandomMovementFactory
 		return energy;
 	}
 	
-	public static INode[] buildCriticalVerticesArray(INode[] crossingNodes, INode angularNode, INode nodeEdgeNode, boolean crossResAct, boolean angResAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct)
+	public static INode[] buildCriticalVerticesArray(IGraph graph, INode[] crossingNodes, INode angularNode, INode nodeEdgeNode, boolean crossResAct, boolean angResAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct)
 	{
 		int index = 0;
 		int arraylength = 0;
 		if (crossResAct && crossingNodes[0] != null) arraylength += 4;
 		if (angResAct) arraylength += 1;
-		if (nodeEdgeResAct) arraylength += 1;
+		if (nodeEdgeResAct) arraylength += 4;
 		if (edgeLengthRatioAct) arraylength += 4;
+		if (arraylength == 0) arraylength++;
+		
 		INode criticalVertices[] = new INode[arraylength];
 		
 		if (crossResAct && crossingNodes[0] != null)
@@ -311,7 +317,10 @@ public class RandomMovementFactory
 		if (nodeEdgeResAct)
 		{
 			criticalVertices[index] = nodeEdgeNode;
-			index ++;
+			criticalVertices[index+1] = nodeEdgeNode;
+			criticalVertices[index+2] = nodeEdgeNode;
+			criticalVertices[index+3] = nodeEdgeNode;
+			index += 4;
 		}
 		
 		if (edgeLengthRatioAct)
@@ -321,6 +330,21 @@ public class RandomMovementFactory
 				criticalVertices[i + index] = edgeLengthRatioNodes[i];
 			}
 			index += 4;
+		}
+		
+		if (criticalVertices[0] == null)
+		{	
+			int random = (int)(Math.random() * graph.getNodes().size());
+			
+			for (INode n : graph.getNodes())
+			{
+				if ((int)n.getTag() == random)
+				{
+					criticalVertices[0] = n;
+					break;
+				}
+				
+			}
 		}
 		
 		return criticalVertices;
@@ -846,21 +870,21 @@ public class RandomMovementFactory
     													  new PointD(nodePositions[(int)e.getTargetNode().getTag()].x, nodePositions[(int)e.getTargetNode().getTag()].y)));
     			
     			if (currentDistance < currentShortestDistance) currentShortestDistance = currentDistance;
-    			if (currentDistance > currentLongestDistance) currentLongestDistance = currentDistance;
+    			if (currentDistance > longestDistance) longestDistance = currentDistance;
     		}
     		
     		if (currentShortestDistance < shortestDistance)
     		{
     			nodeEdgeNode = n;
     			shortestDistance = currentShortestDistance;
-    			longestDistance = currentLongestDistance;
+    			//longestDistance = currentLongestDistance;
     			currentShortestDistance = Double.POSITIVE_INFINITY;
     			currentLongestDistance = Double.NEGATIVE_INFINITY;
     		}
     	}
     	
-    	nodeEdgeDistanceEnergy = (shortestDistance / (graph.getNodes().size() * 40));
-    	return nodeEdgeDistanceEnergy;
+    	nodeEdgeDistanceEnergy = (shortestDistance / longestDistance);
+    	return nodeEdgeDistanceEnergy * 5;
     }
 	
 	
