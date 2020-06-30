@@ -1145,6 +1145,7 @@ public class MainFrame extends JFrame {
         JLabel nodeEdgeDistLabel = new JLabel("Node-Edge Resolution:");
         JLabel edgeLengthRatioLabel = new JLabel("Edge-Length Ratio:");
         JLabel numberRaysLabel = new JLabel("Number of Rays:");
+        JLabel stressLabel = new JLabel("Stress: ");
         JLabel relocateMinLabel = new JLabel("Min. Relocation:");
         JLabel relocateMaxLabel = new JLabel("Max. Relocation:");
         JLabel iterationsPanelThreeLabel = new JLabel("Iterations:");
@@ -1174,6 +1175,8 @@ public class MainFrame extends JFrame {
         checkNodeEdgeDist.setSelected(true);
         JCheckBox checkEdgeLengthRatio = new JCheckBox();
         checkEdgeLengthRatio.setSelected(true);
+        JCheckBox checkStress = new JCheckBox();
+        checkStress.setSelected(true);
         JLabel nextLine = new JLabel(" ");
         JLabel nextLine2 = new JLabel(" ");
         JButton executeCrossingRes = new JButton("Execute");
@@ -1221,76 +1224,83 @@ public class MainFrame extends JFrame {
         
         randMovConstraints.gridx = 0;
         randMovConstraints.gridy = 5;
+        randMov.add(stressLabel, randMovConstraints);
+        
+        randMovConstraints.gridx = 1;
+        randMov.add(checkStress, randMovConstraints);
+        
+        randMovConstraints.gridx = 0;
+        randMovConstraints.gridy = 6;
         randMov.add(numberRaysLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(numberRaysTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 6;
+        randMovConstraints.gridy = 7;
         randMov.add(relocateMinLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(relocateMinTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 7;
+        randMovConstraints.gridy = 8;
         randMov.add(relocateMaxLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(relocateMaxTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 8;
+        randMovConstraints.gridy = 9;
         randMov.add(nextLine, randMovConstraints);
         
-        randMovConstraints.gridy = 9;
+        randMovConstraints.gridy = 10;
         randMov.add(localMaximaLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;        
         randMov.add(localMaximaLabel2, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 10;
+        randMovConstraints.gridy = 11;
         randMov.add(allNodesLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(checkAllNodes, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 11;
+        randMovConstraints.gridy = 12;
         randMov.add(doubleValueLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(checkDoubleValues, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 12;
+        randMovConstraints.gridy = 13;
         randMov.add(iterTillActLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(iterTillActTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 13;
+        randMovConstraints.gridy = 14;
         randMov.add(activeIterLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(activeIterTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 14;
+        randMovConstraints.gridy = 15;
         randMov.add(nextLine2, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 15;
+        randMovConstraints.gridy = 16;
         randMov.add(iterationsPanelThreeLabel, randMovConstraints);
         
         randMovConstraints.gridx = 1;
         randMov.add(iterationsPanelThreeTextField, randMovConstraints);
         
         randMovConstraints.gridx = 0;
-        randMovConstraints.gridy = 16;
+        randMovConstraints.gridy = 17;
         randMov.add(executeCrossingRes, randMovConstraints);
         
         
@@ -1313,6 +1323,7 @@ public class MainFrame extends JFrame {
         			final boolean numbCross = checkNumbCross.isSelected();
         			final boolean nodeEdgeDist = checkNodeEdgeDist.isSelected();
         			final boolean edgeLength = checkEdgeLengthRatio.isSelected();
+        			final boolean stress = checkStress.isSelected();
         			
         			if(relocateMin > relocateMax)
         			{
@@ -1324,7 +1335,7 @@ public class MainFrame extends JFrame {
         				{
         					public void calculatePositions()
         					{
-        						RandomMovementFactory.randomMovement(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, crossRes, angRes, numbCross, nodeEdgeDist, edgeLength, maxNoOfIterations);
+        						RandomMovementFactory.randomMovement(graph, numberRays, relocateMin, relocateMax, allNodes, doubleValues, iterTillAct, activeIter, crossRes, angRes, numbCross, nodeEdgeDist, edgeLength, stress, maxNoOfIterations);
         					}
         				};       			
 
