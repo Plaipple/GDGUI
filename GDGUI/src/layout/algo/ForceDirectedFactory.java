@@ -1,6 +1,7 @@
 package layout.algo;
 
 import com.yworks.yfiles.algorithms.GraphConnectivity;
+import com.yworks.yfiles.algorithms.LineSegment;
 import com.yworks.yfiles.algorithms.YDimension;
 import com.yworks.yfiles.algorithms.YOrientedRectangle;
 import com.yworks.yfiles.algorithms.YPoint;
@@ -209,6 +210,458 @@ public class ForceDirectedFactory {
     		} 
             map.getValue(z_u).addAll(vectors_edge);
             map.getValue(z_v).addAll(vectors_edge);
+    	}
+    }
+    
+    
+    public static void calculateElectricForcesCrossingResolution (IGraph graph, double electricalRepulsion, double threshold, IMapper<INode, List<YVector>> map)
+    {
+    	int edgeNumb = 0;
+    	boolean[][] edgeCrossings = new boolean[graph.getEdges().size()][graph.getEdges().size()];
+    	for (IEdge e : graph.getEdges())
+    	{
+    		e.setTag(edgeNumb);
+    		edgeCrossings[edgeNumb][edgeNumb] = true;
+    		edgeNumb ++;
+    	}
+    	
+    	for (IEdge e : graph.getEdges())
+    	{
+    		YPoint e_s = new YPoint(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y);
+    		YPoint e_t = new YPoint(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y);
+    		
+    		LineSegment ls_e = new LineSegment(e_s, e_t);
+    		
+    		for (IEdge q : graph.getEdges())
+    		{
+    		  /*if (q.getSourceNode() == e.getSourceNode() ||
+    				q.getSourceNode() == e.getTargetNode() ||
+    				q.getTargetNode() == e.getSourceNode() ||
+    				q.getTargetNode() == e.getTargetNode()) continue;*/
+    			
+    			if (edgeCrossings[(int)e.getTag()][(int)q.getTag()]) continue;
+    			
+    			YPoint q_s = new YPoint(q.getSourceNode().getLayout().getCenter().x, q.getSourceNode().getLayout().getCenter().y);
+    			YPoint q_t = new YPoint(q.getTargetNode().getLayout().getCenter().x, q.getTargetNode().getLayout().getCenter().y);
+    			
+    			LineSegment ls_q = new LineSegment(q_s, q_t);
+    			
+    			if (LineSegment.getIntersection(ls_e, ls_q) != null)
+    			{
+    				YVector v_e = new YVector(e_s, e_t);
+    				YVector v_q = new YVector(q_s, q_t);
+    				
+    				
+    				double angle = Math.min(Math.min(YVector.angle(v_e, v_q), YVector.angle(v_q, v_e)), Math.min(YVector.angle(v_e.rotate(Math.PI), v_q), YVector.angle(v_q, v_e.rotate(Math.PI))));
+    				angle = 180*angle/Math.PI;
+    				if (angle == 90) continue;
+    				double factor = threshold * electricalRepulsion / Math.pow(angle,2);
+    				if (factor > 3) factor = 3;
+    				
+    				YVector origin_e_t = new YVector(v_e);
+    				YVector origin_q_t = new YVector(v_q);
+    				origin_e_t.norm();
+    				origin_q_t.norm();
+    				origin_e_t.scale(factor);
+    				origin_q_t.scale(factor);
+    				YVector origin_e_s = new YVector(origin_e_t.rotate(Math.PI));
+    				YVector origin_q_s = new YVector(origin_q_t.rotate(Math.PI));
+    				
+    				double angle_es_qs = Math.min(YVector.angle(origin_e_s, origin_q_s), 2*Math.PI - YVector.angle(origin_e_s, origin_q_s));
+    				double angle_es_qt = Math.min(YVector.angle(origin_e_s, origin_q_t), 2*Math.PI - YVector.angle(origin_e_s, origin_q_t));
+    				
+    				if (angle_es_qs < angle_es_qt)    						
+    				{
+    					map.getValue(e.getSourceNode()).add(origin_q_s);
+    					map.getValue(e.getTargetNode()).add(origin_q_t);
+    					map.getValue(q.getSourceNode()).add(origin_e_s);
+    					map.getValue(q.getTargetNode()).add(origin_e_t);
+    				}
+    				else
+    				{
+    					map.getValue(e.getSourceNode()).add(origin_q_t);
+    					map.getValue(e.getTargetNode()).add(origin_q_s);
+    					map.getValue(q.getSourceNode()).add(origin_e_t);
+    					map.getValue(q.getTargetNode()).add(origin_e_s);
+    				}    				   	
+    				
+    				
+    				
+    				/*boolean e_done = false;
+    				boolean q_done = false;
+    				boolean xZero = false;
+    				boolean yZero = false;
+    				
+    				if (temp_e.getX() == 0)
+    				{
+    					if (q_s.y < q_t.y)
+    					{
+    						if (temp_e.getY() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						q_done = true;
+    					}
+    					else
+    					{
+    						if (temp_e.getY() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						q_done = true;
+    					}
+    					xZero = true;
+    				}
+    				else if (temp_e.getY() == 0)
+    				{
+    					if (e_s.x < e_t.x)
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						q_done = true;
+    						yZero = true;
+    					}
+    					else
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						q_done = true;
+    					}
+    					yZero = true;
+    				}
+    				else if (temp_q.getX() == 0)
+    				{
+    					if (e_s.y < e_t.y)
+    					{
+    						if (temp_q.getY() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						e_done = true;
+    					}
+    					else
+    					{
+    						if (temp_q.getY() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						e_done = true;
+    					}
+    					xZero = true;
+    				}
+    				else if (temp_q.getY() == 0)
+    				{
+    					if (e_s.x < e_t.x)
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						e_done = true;
+    					}
+    					else
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						e_done = true;
+    					}
+    					yZero = true;
+    				}
+    				
+    				if (!xZero)
+    				{	
+    					if (!e_done && e_s.x < e_t.x)
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    					}
+    					else if (!e_done && e_s.x > e_t.x)
+    					{
+    						if (temp_q.getX() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    					}
+
+    					if (!q_done && q_s.x < q_t.x)
+    					{
+    						if (temp_e.getX() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    					}
+    					else if (!q_done && q_s.x > q_t.x)
+    					{
+    						if (temp_e.getX() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    					}
+    				}
+    				else if (!yZero)
+    				{
+    					if (!e_done && e_s.y < e_t.y)
+    					{
+    						if (temp_q.getY() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    					}
+    					else if (!e_done && e_s.y > e_t.y)
+    					{
+    						if (temp_q.getY() < 0)
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q_reverse);
+    							map.getValue(e.getTargetNode()).add(temp_q);
+    						}
+    						else
+    						{
+    							map.getValue(e.getSourceNode()).add(temp_q);
+    							map.getValue(e.getTargetNode()).add(temp_q_reverse);
+    						}
+    					}
+
+    					if (!q_done && q_s.y < q_t.y)
+    					{
+    						if (temp_e.getY() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    					}
+    					else if (!q_done && q_s.y > q_t.y)
+    					{
+    						if (temp_e.getY() < 0)
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e);
+    							map.getValue(q.getTargetNode()).add(temp_e_reverse);
+    						}
+    						else
+    						{
+    							map.getValue(q.getSourceNode()).add(temp_e_reverse);
+    							map.getValue(q.getTargetNode()).add(temp_e);
+    						}
+    					}
+    				}*/
+    			}
+    			edgeCrossings[(int)e.getTag()][(int)q.getTag()] = true;
+    			edgeCrossings[(int)q.getTag()][(int)e.getTag()] = true;
+    		}
+    	}
+    }
+    
+    
+    public static void calculateElectricForcesAngularResolution (IGraph graph, double electricalRepulsion, double threshold, IMapper<INode, List<YVector>> map)
+    {
+    	for (INode n : graph.getNodes())
+    	{
+            List<IEdge> edgeList = new ArrayList<IEdge>();
+            IListEnumerable<IPort> nPorts = n.getPorts();
+            for (IPort p : nPorts)
+            {
+            	for (IEdge e : graph.edgesAt(p, AdjacencyTypes.ALL))
+            	{
+            		edgeList.add(e);
+            	}
+            }
+            
+            if (edgeList.size()<=1) continue;
+            edgeList.sort(new util.CyclicEdgeComparator(graph));
+            
+            for (int i = 0; i < edgeList.size(); i++)
+            {
+            	IEdge e1 = (IEdge) edgeList.get(i);
+            	IEdge e2 = (IEdge) edgeList.get((i+1)%edgeList.size());
+            	YPoint e1_origin;
+            	YPoint e1_target;
+            	YPoint e2_origin;
+            	YPoint e2_target;
+            	
+            	if (e1.getSourceNode() == n)
+            	{
+            		e1_origin = new YPoint(e1.getSourceNode().getLayout().getCenter().x, e1.getSourceNode().getLayout().getCenter().y);
+            		e1_target = new YPoint(e1.getTargetNode().getLayout().getCenter().x, e1.getTargetNode().getLayout().getCenter().y);
+            	}
+            	else
+            	{
+            		e1_origin = new YPoint(e1.getTargetNode().getLayout().getCenter().x, e1.getTargetNode().getLayout().getCenter().y);
+            		e1_target = new YPoint(e1.getSourceNode().getLayout().getCenter().x, e1.getSourceNode().getLayout().getCenter().y);
+            	}
+            	
+            	if (e2.getSourceNode() == n)
+            	{
+                	e2_origin = new YPoint(e2.getSourceNode().getLayout().getCenter().x, e2.getSourceNode().getLayout().getCenter().y);
+                	e2_target = new YPoint(e2.getTargetNode().getLayout().getCenter().x, e2.getTargetNode().getLayout().getCenter().y);
+            	}
+            	else
+            	{
+            		e2_origin = new YPoint(e2.getTargetNode().getLayout().getCenter().x, e2.getTargetNode().getLayout().getCenter().y);
+                	e2_target = new YPoint(e2.getSourceNode().getLayout().getCenter().x, e2.getSourceNode().getLayout().getCenter().y);
+            	}
+            	
+            	YVector vec_e1 = new YVector(e1_target, e1_origin);
+            	YVector vec_e2 = new YVector(e2_target, e2_origin);
+            	
+            	double angle = Math.min(YVector.angle(vec_e1,  vec_e2), 2*Math.PI - YVector.angle(vec_e1, vec_e2));            	
+            	angle = 180*angle/Math.PI;
+				if (angle == 180) continue;
+				double factor = threshold * electricalRepulsion / Math.pow(angle,2);
+				if (factor > 3) factor = 3;
+				factor *= 2;
+				
+				vec_e1.norm();
+				vec_e2.norm();
+				vec_e1.scale(factor);
+				vec_e2.scale(factor);
+				
+				vec_e1 = vec_e1.rotate(Math.PI / 2);
+				YVector vec_e1_reverse = new YVector(vec_e1.rotate(Math.PI));
+				vec_e2 = vec_e2.rotate(Math.PI / 2);
+				YVector vec_e2_reverse = new YVector(vec_e2.rotate(Math.PI));
+				
+				YPoint potentiale1Node1 = new YPoint((e1_target.x + vec_e1.getX()), (e1_target.y + vec_e1.getY()));
+				YPoint potentiale1Node2 = new YPoint((e1_target.x + vec_e1_reverse.getX()), (e1_target.y + vec_e1_reverse.getY()));
+				
+				YPoint potentiale2Node1 = new YPoint((e2_target.x + vec_e2.getX()), (e2_target.y + vec_e2.getY()));
+				YPoint potentiale2Node2 = new YPoint((e2_target.x + vec_e2_reverse.getX()), (e2_target.y + vec_e2_reverse.getY()));
+				
+				if (potentiale1Node1.distanceTo(e2_target) > potentiale1Node2.distanceTo(e2_target))
+				{
+					if (e1.getSourceNode() == n)
+					{
+						map.getValue(e1.getTargetNode()).add(vec_e1);
+					}
+					else
+					{
+						map.getValue(e1.getSourceNode()).add(vec_e1);
+					}
+				}
+				else
+				{
+					if (e1.getSourceNode() == n)
+					{
+						map.getValue(e1.getTargetNode()).add(vec_e1_reverse);
+					}
+					else
+					{
+						map.getValue(e1.getSourceNode()).add(vec_e1_reverse);
+					}
+				}
+				
+				if (potentiale2Node1.distanceTo(e1_target) > potentiale2Node2.distanceTo(e1_target))
+				{
+					if (e2.getSourceNode() == n)
+					{
+						map.getValue(e2.getTargetNode()).add(vec_e2);
+					}
+					else
+					{
+						map.getValue(e2.getSourceNode()).add(vec_e2);
+					}
+				}
+				else
+				{
+					if (e2.getSourceNode() == n)
+					{
+						map.getValue(e2.getTargetNode()).add(vec_e2_reverse);
+					}
+					else
+					{
+						map.getValue(e2.getSourceNode()).add(vec_e2_reverse);
+					}
+				}
+            }	
     	}
     }
 }

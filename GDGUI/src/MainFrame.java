@@ -851,6 +851,8 @@ public class MainFrame extends JFrame {
         JLabel checkSpringsLabel = new JLabel("Use Springs:");
         JLabel checkRepulsionLabel = new JLabel("Vertex-Vertex Repulsion:");
         JLabel checkEVRepulsionLabel = new JLabel("Edge-Vertex Repulsion:");
+        JLabel crossingResRepulsionLabel = new JLabel("Crossing-Res. Repulsion:");
+        JLabel angularResRepulsionLabel = new JLabel("Angular-Res. Repulsion:");
         JLabel nextLineLabel = new JLabel(" ");
         JLabel skipLineLabel = new JLabel(" ");
         JTextField iterationsTextField = new JTextField("1000", 8);
@@ -864,6 +866,10 @@ public class MainFrame extends JFrame {
         checkRepulsion.setSelected(true);
         JCheckBox checkEVRepulsion = new JCheckBox();
         checkEVRepulsion.setSelected(true);
+        JCheckBox checkCrossingResRepulsion = new JCheckBox();
+        checkCrossingResRepulsion.setSelected(true);
+        JCheckBox checkAngularResRepulsion = new JCheckBox();
+        checkAngularResRepulsion.setSelected(true);
         JButton executeRepulsion = new JButton("Execute");
     	
         repulsion.setLayout(new GridBagLayout());
@@ -906,38 +912,52 @@ public class MainFrame extends JFrame {
         
         constraints.gridx = 0;
         constraints.gridy = 5;
+        repulsion.add(angularResRepulsionLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(checkAngularResRepulsion, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 6;
+        repulsion.add(crossingResRepulsionLabel, constraints);
+        
+        constraints.gridx = 1;
+        repulsion.add(checkCrossingResRepulsion, constraints);
+        
+        constraints.gridx = 0;
+        constraints.gridy = 7;
         repulsion.add(checkEVRepulsionLabel, constraints);
         
         constraints.gridx = 1;
         repulsion.add(checkEVRepulsion, constraints);
         
         constraints.gridx = 0;
-        constraints.gridy = 6;
+        constraints.gridy = 8;
         repulsion.add(repulsionLabel, constraints);
         
         constraints.gridx = 1;
         repulsion.add(repulsionTextField, constraints);
         
         constraints.gridx = 0;
-        constraints.gridy = 7;
+        constraints.gridy = 9;
         repulsion.add(nextLineLabel, constraints);
         
         constraints.gridx = 0;
-        constraints.gridy = 8;
+        constraints.gridy = 10;
         repulsion.add(thresholdLabel, constraints);
         
         constraints.gridx = 1;
         repulsion.add(thresholdTextField, constraints);        
         
         constraints.gridx = 0;
-        constraints.gridy = 9;
+        constraints.gridy = 11;
         repulsion.add(iterationsLabel, constraints);
         
         constraints.gridx = 1;
         repulsion.add(iterationsTextField, constraints);
         
         constraints.gridx = 0;
-        constraints.gridy = 10;
+        constraints.gridy = 12;
         repulsion.add(executeRepulsion, constraints);
         
         executeRepulsion.addActionListener(new java.awt.event.ActionListener() 
@@ -959,7 +979,9 @@ public class MainFrame extends JFrame {
                 		{
                 			if (checkSpringRepulsion.isSelected()) ForceDirectedFactory.calculateSpringForcesEades(graph, springstiffness, naturalspringlength, threshold, map);
                 			if (checkRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesEades(graph, electricrepulsion, threshold, map);
-                			if (checkEVRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);        	            
+                			if (checkCrossingResRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesCrossingResolution(graph, electricrepulsion, threshold, map);
+                			if (checkEVRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, electricrepulsion, threshold, map);  
+                			if (checkAngularResRepulsion.isSelected()) ForceDirectedFactory.calculateElectricForcesAngularResolution(graph, electricrepulsion, threshold, map);
                 		}
                 	};
 
@@ -1166,7 +1188,7 @@ public class MainFrame extends JFrame {
         JLabel activeIterLabel = new JLabel("active Iterations ");
         JTextField numberRaysTextField = new JTextField("8", 8);
         JTextField relocateMinTextField = new JTextField("10", 8);
-        JTextField relocateMaxTextField = new JTextField("100", 8);
+        JTextField relocateMaxTextField = new JTextField("250", 8);
         JTextField iterTillActTextField = new JTextField("10", 8);
         JTextField activeIterTextField = new JTextField("10", 8);
         JTextField iterationsPanelThreeTextField = new JTextField("1000", 8);
