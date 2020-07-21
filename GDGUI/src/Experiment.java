@@ -10,6 +10,7 @@
 
 import com.yworks.yfiles.view.GraphComponent;
 
+import layout.algo.ForceDirectedFactory;
 import layout.algo.RandomMovementFactory;
 import layout.algo.SimulatedAnnealingFactory;
 
@@ -23,6 +24,8 @@ import java.time.Duration;
 import com.yworks.yfiles.graph.IGraph;
 import com.yworks.yfiles.graph.LayoutUtilities;
 import com.yworks.yfiles.graphml.GraphMLIOHandler;
+import com.yworks.yfiles.layout.GraphTransformer;
+import com.yworks.yfiles.layout.OperationType;
 import com.yworks.yfiles.layout.organic.OrganicLayout;
  
 public class Experiment
@@ -155,7 +158,7 @@ public class Experiment
             else
             {
             	GraphMLIOHandler ioh = new GraphMLIOHandler();
-
+           	
                 double eadesAngular = 0;
                 double eadesCrossing = 0;
                 double eadesEdgeLength = 0.0;
@@ -202,8 +205,10 @@ public class Experiment
                     /*
                     layout.algo.ForceDirectedAlgorithm eades = new layout.algo.ForceDirectedAlgorithm(view, 1000) {
                         public void calculateVectors() {
-                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 100, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateSpringForcesEades(graph, 150, 150, 0.01, map);
                             layout.algo.ForceDirectedFactory.calculateElectricForcesEades(graph, 100000, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateElectricForcesCrossingResolution(graph, 100000, 0.01, map);
+                            layout.algo.ForceDirectedFactory.calculateElectricForcesAngularResolution(graph, 100000, 0.01, map);
                             //layout.algo.ForceDirectedFactory.calculateElectricForcesNodeEdge(graph, 100000, 0.01, map);
                         }
                     };
@@ -233,11 +238,16 @@ public class Experiment
                     //Then, run the RandomMovement algorithm
                     layout.algo.RandomMovementAlgorithm randMov= new layout.algo.RandomMovementAlgorithm(view, 1000) {
                         public void calculatePositions() {
-                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, true, false, true, false, false, maxNoOfIterations); 
+                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, false, false, true, false, false, maxNoOfIterations); 
                         }
                     };
           			
                     LayoutUtilities.applyLayout(view.getGraph(), new OrganicLayout());
+                    
+                    GraphTransformer gt = new GraphTransformer();
+                    gt.setOperation(OperationType.SCALE);
+                    gt.setScaleFactor(Double.valueOf(3));
+                    LayoutUtilities.morphLayout(view, gt, Duration.ofSeconds(0), null);
                     
                     randMov.run();
 

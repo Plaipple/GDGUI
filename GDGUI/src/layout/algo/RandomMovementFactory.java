@@ -70,7 +70,7 @@ public class RandomMovementFactory
 		}
 		
 		INode crossingNodes[] = new INode[4];
-		if (crossResAct) crossingNodes = calculateMinAngleNodes(graph, nodePositions);
+		if (crossResAct) crossingNodes = calculateMinAngleNodes(graph, nodePositions);		
 		INode[] intersectionNodes = buildCriticalVerticesArray(graph, crossingNodes, angularNode, nodeEdgeNode, crossResAct, angResAct, nodeEdgeResAct, edgeLengthRatioAct);
 		
 		
@@ -113,6 +113,14 @@ public class RandomMovementFactory
 		
 		int chosenNode = (int)(Math.random() * intersectionNodes.length);
 		INode n = intersectionNodes[chosenNode];
+		
+		INode neighbourNodes[] = new INode[1];
+		if (angResAct)
+		{
+			neighbourNodes = consideredVerticesNew(graph, n);
+			energy += angularResolutionEnergy(graph, nodePositions, neighbourNodes, nodeAngles);
+		}
+		
 		double positionradiusMax = relocateMax;
 		double positionradiusMin = relocateMin;
 		
@@ -148,28 +156,32 @@ public class RandomMovementFactory
 			
 			n_new = new PointD(basicVec.getX() + n.getLayout().getCenter().x, basicVec.getY() + n.getLayout().getCenter().y);
 			
-			/*PointD top_left = new PointD(bound_left, bound_top);
-			PointD top_right = new PointD(bound_right, bound_top);
-			PointD bottom_left = new PointD(bound_left, bound_bottom);
-			PointD bottom_right = new PointD(bound_right, bound_bottom);
-			
-			INode n_copy = graph.createNode();
-			INode top_left_corner = graph.createNode();
-			INode top_right_corner = graph.createNode();
-			INode bottom_left_corner = graph.createNode();
-			INode bottom_right_corner = graph.createNode();
-			
-			graph.setNodeCenter(n_copy, n_new);
-			graph.setNodeCenter(top_left_corner, top_left);
-			graph.setNodeCenter(top_right_corner, top_right);
-			graph.setNodeCenter(bottom_left_corner, bottom_left);
-			graph.setNodeCenter(bottom_right_corner, bottom_right);
-			
-			graph.remove(n_copy);
-			graph.remove(top_left_corner);
-			graph.remove(top_right_corner);
-			graph.remove(bottom_left_corner);
-			graph.remove(bottom_right_corner);*/
+			boolean debug = false;
+			if (debug)
+			{
+				PointD top_left = new PointD(bound_left, bound_top);
+				PointD top_right = new PointD(bound_right, bound_top);
+				PointD bottom_left = new PointD(bound_left, bound_bottom);
+				PointD bottom_right = new PointD(bound_right, bound_bottom);
+				
+				INode n_copy = graph.createNode();
+				INode top_left_corner = graph.createNode();
+				INode top_right_corner = graph.createNode();
+				INode bottom_left_corner = graph.createNode();
+				INode bottom_right_corner = graph.createNode();
+				
+				graph.setNodeCenter(n_copy, n_new);
+				graph.setNodeCenter(top_left_corner, top_left);
+				graph.setNodeCenter(top_right_corner, top_right);
+				graph.setNodeCenter(bottom_left_corner, bottom_left);
+				graph.setNodeCenter(bottom_right_corner, bottom_right);
+				
+				graph.remove(n_copy);
+				graph.remove(top_left_corner);
+				graph.remove(top_right_corner);
+				graph.remove(bottom_left_corner);
+				graph.remove(bottom_right_corner);
+			}
 			
 			if(n_new.x > bound_right + boundThreshold || n_new.x < bound_left - boundThreshold || n_new.y > bound_bottom + boundThreshold || n_new.y < bound_top - boundThreshold) continue;
 			
@@ -219,11 +231,7 @@ public class RandomMovementFactory
 			
 			if (edgeLengthRatioAct) edgeLengthRatioEnergy(graph, n);
 			
-			if (angResAct)
-			{
-				INode[] criticalVertices = consideredVerticesNew(graph, n);
-				angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);				
-			}
+			if (angResAct) energy -= angularResolutionEnergy(graph, nodePositions, neighbourNodes, nodeAngles);
 
 			nodeEdgeNode = bestNodeEdgeNode;						
 			
@@ -239,6 +247,12 @@ public class RandomMovementFactory
 		}
 		else
 		{
+			if (angResAct)
+			{
+				energy -= angularResolutionEnergy(graph, nodePositions, neighbourNodes, nodeAngles);
+				nodeAngles = nodeAnglesSave;
+			}
+			
 			unchangeTrials ++;
 			if (altModeTrials >= activeIter)
 			{
@@ -318,6 +332,7 @@ public class RandomMovementFactory
 		if (numbCrossAct) energy += edgeCrossingsEnergy(graph, edgeCrossings);
 		if (crossResAct) energy += crossingResolutionEnergy(graph, nodePositions);
 		
+		/*
 		if (angResAct)
 		{
 			INode[] criticalNodes = new INode[graph.getNodes().size()];
@@ -328,7 +343,7 @@ public class RandomMovementFactory
 			}
 			
 			energy += angularResolutionEnergy(graph, nodePositions, criticalNodes, nodeAngles);
-		}
+		}*/
 		
 		if (nodeEdgeResAct) energy += nodeEdgeDistanceEnergy(graph);
 		
@@ -343,7 +358,6 @@ public class RandomMovementFactory
 		int index = 0;
 		int arraylength = 0;
 		if (crossResAct && crossingNodes[0] != null) arraylength += 4;
-		if (angResAct) arraylength += 4;
 		if (nodeEdgeResAct) arraylength += 4;
 		if (edgeLengthRatioAct) arraylength += 4;
 		if (arraylength == 0) arraylength++;
@@ -356,15 +370,6 @@ public class RandomMovementFactory
 			{
 				criticalVertices[i + index] = crossingNodes[i];
 			}
-			index += 4;
-		}
-		
-		if (angResAct)
-		{
-			criticalVertices[index] = angularNode;
-			criticalVertices[index+1] = angularNode;
-			criticalVertices[index+2] = angularNode;
-			criticalVertices[index+3] = angularNode;
 			index += 4;
 		}
 		
@@ -528,17 +533,83 @@ public class RandomMovementFactory
 	public static PointD[] initNodeMap (IGraph graph, PointD[] nodePositions)
 	{
 		int nodeNumber = 0;
-		for (INode i : graph.getNodes())
+		for (INode n : graph.getNodes())
 		{   
-			i.setTag(nodeNumber);
+			n.setTag(nodeNumber);
 			
-			bound_top = Math.min(i.getLayout().getCenter().y, bound_top);
-			bound_bottom = Math.max(i.getLayout().getCenter().y, bound_bottom);
-			bound_left = Math.min(i.getLayout().getCenter().x, bound_left);
-			bound_right = Math.max(i.getLayout().getCenter().x, bound_right);
-			nodePositions[(int)i.getTag()] = new PointD(i.getLayout().getCenter().x, i.getLayout().getCenter().y);
+			bound_top = Math.min(n.getLayout().getCenter().y, bound_top);
+			bound_bottom = Math.max(n.getLayout().getCenter().y, bound_bottom);
+			bound_left = Math.min(n.getLayout().getCenter().x, bound_left);
+			bound_right = Math.max(n.getLayout().getCenter().x, bound_right);
+			nodePositions[(int)n.getTag()] = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
 			nodeNumber ++;
+			
+			
+			//Filling the NodeAngles Array which is needed for Angular Resolution Calculations
+			List<IEdge> edgeList = new ArrayList<IEdge>();
+			IListEnumerable<IPort> nPorts = n.getPorts();
+			for (IPort p : nPorts)
+			{
+				for (IEdge e : graph.edgesAt(p, AdjacencyTypes.ALL))
+				{
+					edgeList.add(e);
+				}
+			}
+
+			double currentAngle = Double.POSITIVE_INFINITY;
+
+			if (edgeList.size()<=1) continue;
+			edgeList.sort(new util.CyclicEdgeComparator(graph));
+
+			for (int i = 0; i < edgeList.size(); i++)
+			{
+				IEdge e1 = (IEdge) edgeList.get(i);
+				IEdge e2 = (IEdge) edgeList.get((i+1)%edgeList.size());
+
+				YPoint e1_s = new YPoint(e1.getSourceNode().getLayout().getCenter().x, e1.getSourceNode().getLayout().getCenter().y);
+				YPoint e1_t = new YPoint(e1.getTargetNode().getLayout().getCenter().x, e1.getTargetNode().getLayout().getCenter().y);
+
+				YPoint e2_s = new YPoint(e2.getSourceNode().getLayout().getCenter().x, e2.getSourceNode().getLayout().getCenter().y);
+				YPoint e2_t = new YPoint(e2.getTargetNode().getLayout().getCenter().x, e2.getTargetNode().getLayout().getCenter().y);
+
+				YVector v1;
+				YVector v2;
+
+				if (e1_s.x == e2_s.x && e1_s.y == e2_s.y)
+				{                	
+					v1 = new YVector(e1_s, e1_t);
+					v2 = new YVector(e2_s, e2_t);
+				}
+				else if (e1_s.x == e2_t.x && e1_s.y == e2_t.y)
+				{               	
+					v1 = new YVector(e1_s, e1_t);
+					v2 = new YVector(e2_t, e2_s);
+				}
+				else if (e1_t.x == e2_s.x && e1_t.y == e2_s.y)
+				{
+					v1 = new YVector(e1_t, e1_s);
+					v2 = new YVector(e2_s, e2_t);            		
+				}
+				else
+				{
+					v1 = new YVector(e1_t, e1_s);
+					v2 = new YVector(e2_t, e2_s);            		
+				}
+
+
+				if (YVector.angle(v1, v2) < currentAngle)
+				{
+					nodeAngles[(int)n.getTag()] = YVector.angle(v1, v2);
+					currentAngle = YVector.angle(v1, v2);
+				}
+				if ((2 * Math.PI - YVector.angle(v1, v2)) < currentAngle)
+				{
+					nodeAngles[(int)n.getTag()] = 2 * Math.PI - YVector.angle(v1, v2);
+					currentAngle = 2 * Math.PI -  YVector.angle(v1, v2);
+				}
+			}           
 		}
+		
 		
 		double dynamic_bound_bottom = bound_top + (40 * graph.getNodes().size());
 		double dynamic_bound_right = bound_left + (40 * graph.getNodes().size());
@@ -557,7 +628,7 @@ public class RandomMovementFactory
 			bound_right = graph_center + (dynamic_bound_right - bound_left) / 2;
 			bound_left = graph_center - (dynamic_bound_right - bound_left) / 2;
 		}
-		
+			
 		return nodePositions;
 	}
 	
@@ -870,12 +941,12 @@ public class RandomMovementFactory
             }           
 		}
 		
-		for (int k = 0; k < nodeAngles.length; k++)
+		for (int k = 0; k < criticalVertices.length; k++)
 		{
-			if (nodeAngles[k] < angle && nodeAngles[k] != 0)
+			if (nodeAngles[(int)criticalVertices[k].getTag()] < angle && nodeAngles[(int)criticalVertices[k].getTag()] != 0)
 			{
-				angle = nodeAngles[k];
-				nodeIndex = k;
+				angle = nodeAngles[(int)criticalVertices[k].getTag()];
+				nodeIndex = (int)criticalVertices[k].getTag();
 			}
 		}
 		
@@ -900,7 +971,7 @@ public class RandomMovementFactory
 		if (angle == Double.POSITIVE_INFINITY) return 0;
 		angle = 180 * angle / Math.PI;
 		angularResolutionEnergy = angle / (360 / edgesCount);
-		return angularResolutionEnergy * 3;
+		return angularResolutionEnergy * 1;
 	}
 	
 	
