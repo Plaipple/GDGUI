@@ -54,6 +54,7 @@ public class RandomMovementFactory
 	static double longestEdge = Double.NEGATIVE_INFINITY;
 	static double shortestEdge = Double.POSITIVE_INFINITY;
 	static INode[] edgeLengthRatioNodes = new INode[4];
+	static double angularEnergyTest = 0;
 	
 	public static void randomMovement(IGraph graph, int numberRays, int relocateMin, int relocateMax, boolean allNodes, boolean doubleValues, int iterTillAct, int activeIter, boolean crossResAct, boolean angResAct, boolean numbCrossAct, boolean nodeEdgeResAct, boolean edgeLengthRatioAct, boolean stressAct, int iterations)
 	{		
@@ -141,9 +142,6 @@ public class RandomMovementFactory
 		double longestEdgeSave = longestEdge;
 		double shortestEdgeSave = shortestEdge;
 		
-		double best_worse_energy = 0;
-		boolean workedonce = false;
-		
 		for (int i = 0; i < numberRays; i++)			
 		{
 			//positionradiusMax = relocateMax * ((iterations - index) / iterations);
@@ -193,19 +191,8 @@ public class RandomMovementFactory
 				n_new_best = n_new;
 				energy = energyNew;
 				bestNodeEdgeNode = nodeEdgeNode;
-				workedonce = true;
 			}
-		/*	else if(unchangeTrials >= iterTillAct)
-			{
-				if (energyNew >= best_worse_energy)
-				{
-					n_new_best = n_new;
-					energy = energyNew;
-					best_worse_energy = energyNew;
-					bestNodeEdgeNode = nodeEdgeNode;
-					workedonce = true;
-				}
-			}*/
+			
 			nodePositions[(int)n.getTag()] = new PointD(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
 			edgeCrossings = edgeCrossingsSave;
 			nodeAngles = nodeAnglesSave;
@@ -219,8 +206,8 @@ public class RandomMovementFactory
 			basicVec.norm();
 		}		
 		
-		if (energy > currentEnergy /*|| (unchangeTrials >= iterTillAct && workedonce)*/)
-		{
+		if (energy > currentEnergy)
+		{					
 			graph.setNodeCenter(n, n_new_best);
 			
 			nodePositions[(int)n.getTag()] = n_new_best;
@@ -229,10 +216,10 @@ public class RandomMovementFactory
 			
 			if (stressAct) shortestPaths = shortestPathsNew(graph, shortestPaths, n, nodePositions);
 			
-			if (edgeLengthRatioAct) edgeLengthRatioEnergy(graph, n);
+			if (edgeLengthRatioAct) edgeLengthRatioEnergy(graph, n);	
 			
 			if (angResAct) energy -= angularResolutionEnergy(graph, nodePositions, neighbourNodes, nodeAngles);
-
+			
 			nodeEdgeNode = bestNodeEdgeNode;						
 			
 			if (altModeTrials >= activeIter)
@@ -250,6 +237,7 @@ public class RandomMovementFactory
 			if (angResAct)
 			{
 				energy -= angularResolutionEnergy(graph, nodePositions, neighbourNodes, nodeAngles);
+
 				nodeAngles = nodeAnglesSave;
 			}
 			
@@ -301,7 +289,9 @@ public class RandomMovementFactory
 		if (angResAct)
 		{
 			INode[] criticalVertices = consideredVerticesNew(graph, n);
-			energy += angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
+			double angularenergy = angularResolutionEnergy(graph, nodePositions, criticalVertices, nodeAngles);
+			energy += angularenergy;
+			if (angularEnergyTest < angularenergy) angularEnergyTest = angularenergy;
 		}		
 	/*	graph.remove(n_copy);
 		graph.remove(top_left_corner);
@@ -873,6 +863,7 @@ public class RandomMovementFactory
 		double currentAngle;
 		int edgesCount = 0;
 		int nodeIndex = 0;
+		IEdge movedNodeEdge = graph.getEdges().first();
 		
 		for (int n = 0; n < criticalVertices.length; n++)
 		{
@@ -890,11 +881,19 @@ public class RandomMovementFactory
             currentAngle = Double.POSITIVE_INFINITY;
             
             if (edgeList.size()<=1) continue;
-            edgeList.sort(new util.CyclicEdgeComparator(graph));
+            edgeList.sort(new util.CyclicEdgeComparator(graph));           
             
             for (int i = 0; i < edgeList.size(); i++)
             {
+            	
             	IEdge e1 = (IEdge) edgeList.get(i);
+            	
+                if (n != (criticalVertices.length-1) && (e1.getTargetNode() == criticalVertices[criticalVertices.length-1] || e1.getSourceNode() == criticalVertices[criticalVertices.length-1]))
+                {
+                	movedNodeEdge = e1;
+                	continue;
+                }
+            	
             	IEdge e2 = (IEdge) edgeList.get((i+1)%edgeList.size());
             	
             	YPoint e1_s = new YPoint(nodePositions[(int)e1.getSourceNode().getTag()].x, nodePositions[(int)e1.getSourceNode().getTag()].y);
@@ -927,18 +926,89 @@ public class RandomMovementFactory
                 	v2 = new YVector(e2_t, e2_s);            		
             	}
             	
+            	double testAngle = YVector.angle(v1,  v2);
+            	double testAngle_reverse = 2*Math.PI - YVector.angle(v1, v2);
             	
-            	if (YVector.angle(v1, v2) < currentAngle)
+            	if (testAngle != 0 && testAngle_reverse != 0)
             	{
-            		nodeAngles[(int)criticalVertices[n].getTag()] = YVector.angle(v1, v2);
-            		currentAngle = YVector.angle(v1, v2);
+            		if (testAngle < currentAngle)
+                	{
+                		nodeAngles[(int)criticalVertices[n].getTag()] = testAngle;
+                		currentAngle = testAngle;
+                	}
+                	if (testAngle_reverse < currentAngle)
+                	{
+                		nodeAngles[(int)criticalVertices[n].getTag()] = testAngle_reverse;
+                		currentAngle = testAngle_reverse;
+                	}
             	}
-            	if ((2 * Math.PI - YVector.angle(v1, v2)) < currentAngle)
+            	else
             	{
-            		nodeAngles[(int)criticalVertices[n].getTag()] = 2 * Math.PI - YVector.angle(v1, v2);
-            		currentAngle = 2 * Math.PI -  YVector.angle(v1, v2);
+            		nodeAngles[(int)criticalVertices[n].getTag()] = 2*Math.PI;
+            		currentAngle = 2 * Math.PI;
             	}
-            }           
+            	           	
+            }
+            
+            if (n != (criticalVertices.length-1))
+        	{
+            	for (IEdge e : edgeList)
+            	{
+            		if (movedNodeEdge == e) continue;
+            		
+            		YPoint movedNodeEdge_s = new YPoint(nodePositions[(int)movedNodeEdge.getSourceNode().getTag()].x, nodePositions[(int)movedNodeEdge.getSourceNode().getTag()].y);
+                	YPoint movedNodeEdge_t = new YPoint(nodePositions[(int)movedNodeEdge.getTargetNode().getTag()].x, nodePositions[(int)movedNodeEdge.getTargetNode().getTag()].y);
+                	
+                	YPoint e_s = new YPoint(nodePositions[(int)e.getSourceNode().getTag()].x, nodePositions[(int)e.getSourceNode().getTag()].y);
+                	YPoint e_t = new YPoint(nodePositions[(int)e.getTargetNode().getTag()].x, nodePositions[(int)e.getTargetNode().getTag()].y);
+
+                	YVector v_1;
+                	YVector v_2;
+                	
+                	if (movedNodeEdge_s.x == e_s.x && movedNodeEdge_s.y == e_s.y)
+                	{                	
+                    	v_1 = new YVector(movedNodeEdge_s, movedNodeEdge_t);
+                    	v_2 = new YVector(e_s, e_t);
+                	}
+                	else if (movedNodeEdge_s.x == e_t.x && movedNodeEdge_s.y == e_t.y)
+                	{               	
+                    	v_1 = new YVector(movedNodeEdge_s, movedNodeEdge_t);
+                    	v_2 = new YVector(e_t, e_s);
+                	}
+                	else if (movedNodeEdge_t.x == e_s.x && movedNodeEdge_t.y == e_s.y)
+                	{
+                    	v_1 = new YVector(movedNodeEdge_t, movedNodeEdge_s);
+                    	v_2 = new YVector(e_s, e_t);            		
+                	}
+                	else
+                	{
+                    	v_1 = new YVector(movedNodeEdge_t, movedNodeEdge_s);
+                    	v_2 = new YVector(e_t, e_s);            		
+                	}
+                	
+                	double test_Angle = YVector.angle(v_1, v_2);
+                	double test_Angle_reverse = 2*Math.PI - YVector.angle(v_1, v_2);
+                	
+                	if (test_Angle != 0 && test_Angle_reverse != 0)
+                	{
+                		if (test_Angle < currentAngle)
+                    	{
+                    		nodeAngles[(int)criticalVertices[n].getTag()] = test_Angle;
+                    		currentAngle = test_Angle;
+                    	}
+                    	if (test_Angle_reverse < currentAngle)
+                    	{
+                    		nodeAngles[(int)criticalVertices[n].getTag()] = test_Angle_reverse;
+                    		currentAngle = test_Angle_reverse;
+                    	}
+                	}
+                	else
+                	{
+                		nodeAngles[(int)criticalVertices[n].getTag()] = 2*Math.PI;
+                		currentAngle = 2 * Math.PI;
+                	}               		
+            	}
+        	}
 		}
 		
 		for (int k = 0; k < criticalVertices.length; k++)
@@ -1008,7 +1078,7 @@ public class RandomMovementFactory
     	}
     	
     	nodeEdgeDistanceEnergy = (shortestDistance / longestDistance);
-    	return nodeEdgeDistanceEnergy * 3;
+    	return nodeEdgeDistanceEnergy * 2;
     }
 	
 	

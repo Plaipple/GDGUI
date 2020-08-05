@@ -1026,7 +1026,7 @@ public class MainFrame extends JFrame {
         JLabel lambdaOneLabel = new JLabel("Avg. Node-Pair Dist.:");
         JLabel lambdaTwoLabel = new JLabel("Edge Crossings:");
         JLabel lambdaThreeLabel = new JLabel("Avg. Edge Lengths:");
-        JLabel lambdaFourLabel = new JLabel("Avg. Node-Edge Dist.:");
+        JLabel lambdaFourLabel = new JLabel("Avg. EdgeVertex Dist.:");
         JLabel areaPerNodeLabel = new JLabel("Space per Node");
         JLabel iterationsSimAnnealLabel = new JLabel ("Iterations: ");
         JTextField lambdaOneTextField = new JTextField("30", 8);
@@ -1173,7 +1173,7 @@ public class MainFrame extends JFrame {
         JLabel crossResLabel = new JLabel("Crossing Resolution:");
         JLabel angResLabel = new JLabel("Angular Resolution:");
         JLabel numbCrossLabel = new JLabel("Number of Crossings:");
-        JLabel nodeEdgeDistLabel = new JLabel("Node-Edge Resolution:");
+        JLabel nodeEdgeDistLabel = new JLabel("Edge-Vertex Resolution:");
         JLabel edgeLengthRatioLabel = new JLabel("Edge-Length Ratio:");
         JLabel numberRaysLabel = new JLabel("Number of Rays:");
         JLabel stressLabel = new JLabel("Stress: ");

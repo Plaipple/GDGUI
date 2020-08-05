@@ -664,4 +664,65 @@ public class ForceDirectedFactory {
             }	
     	}
     }
+    
+    
+    public static void angularResolutionForces(IGraph view, double threshold, IMapper<INode, List<YVector>> map )
+    {
+        double angle;
+        List<YVector> vectors;
+        for (INode n : view.getNodes()) {
+            vectors = new java.util.ArrayList<YVector>();
+            //Sort in cyclic order the adjacent edges
+            List<IEdge> edgeList = new ArrayList<IEdge>();
+            //for (IEdgeCursor e = n.getEdges(); e.ok(); e.next())
+            IListEnumerable<IPort> nPorts = n.getPorts();
+            for (IPort p : nPorts) {
+                for (IEdge e : view.edgesAt(p, AdjacencyTypes.ALL)) {
+                    edgeList.add(e);
+                }
+            }
+
+            if (edgeList.size() == 1) continue;
+
+            edgeList.sort(new util.CyclicEdgeComparator(view));
+
+            for (int i = 0; i < edgeList.size(); i++) {
+                //e1=(v,u1) and e2=(v,u2) are adjacent edges at v.
+
+                IEdge e1 = (IEdge) edgeList.get(i);
+                IEdge e2 = (IEdge) edgeList.get((i + 1) % edgeList.size());
+
+
+                INode u1 = (n == e1.getSourceNode()) ? e1.getTargetNode() : e1.getSourceNode();
+                INode u2 = (n == e2.getSourceNode()) ? e2.getTargetNode() : e2.getSourceNode();
+
+
+                YPoint p_v = new YPoint(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
+                YPoint p_u1 = new YPoint(u1.getLayout().getCenter().x, u1.getLayout().getCenter().y);
+                YPoint p_u2 = new YPoint(u2.getLayout().getCenter().x, u2.getLayout().getCenter().y);
+                YPoint p_b = new YPoint(n.getLayout().getCenter().x, n.getLayout().getCenter().y);
+
+                YVector v_u1 = new YVector(p_u1, p_v);
+                YVector v_u2 = new YVector(p_u2, p_v);
+
+                // angle is calculated for the rotation of bisector vector force
+                angle =  (YVector.angle(v_u2, v_u1)) / 2;
+                YVector v_b= v_u2.rotate(angle);
+
+                //Angular force calculation
+                YVector u1Force = new YVector(p_u1).orthoNormal(v_b);
+                u1Force.norm();
+                YVector u2Force = new YVector(p_u2).orthoNormal(v_b);
+                u2Force.norm();
+
+
+                u1Force.scale(threshold *  (-1 / Math.tan(YVector.angle(v_u1, v_b) / 2)));
+                map.getValue(u1).add(u1Force);
+
+                u2Force.scale(threshold * (1 / Math.tan(YVector.angle(v_b, v_u2) / 2)));
+                map.getValue(u2).add(u2Force);
+
+            }
+        }
+    }
 }

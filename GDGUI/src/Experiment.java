@@ -238,7 +238,7 @@ public class Experiment
                     //Then, run the RandomMovement algorithm
                     layout.algo.RandomMovementAlgorithm randMov= new layout.algo.RandomMovementAlgorithm(view, 1000) {
                         public void calculatePositions() {
-                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, false, false, true, false, false, maxNoOfIterations); 
+                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, false, false, true, false, false, maxNoOfIterations);
                         }
                     };
           			
@@ -250,7 +250,7 @@ public class Experiment
                     LayoutUtilities.morphLayout(view, gt, Duration.ofSeconds(0), null);
                     
                     randMov.run();
-
+					
                     finishTime = System.currentTimeMillis();
                     
                     ioh.write(view.getGraph(), outputDirectoryRandomMovement + children[i]);
