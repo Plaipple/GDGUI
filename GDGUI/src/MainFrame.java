@@ -1135,16 +1135,18 @@ public class MainFrame extends JFrame {
            		 	};
            		 	
            		 	sa.addAlgorithmListener(new AlgorithmListener()
+           		 	{
+           		 		public void algorithmStarted(AlgorithmEvent evt) 
            		 		{
-           		 			public void algorithmStarted(AlgorithmEvent evt) {
-        		    	}
 
-        		    	public void algorithmFinished(AlgorithmEvent evt) 
-        		    	{
-        		    		progressBar.setValue(0);
-        		    		view.fitContent();
-        		    		view.updateUI();
-        		    	}
+           		 		}
+
+           		 		public void algorithmFinished(AlgorithmEvent evt) 
+           		 		{
+           		 			progressBar.setValue(0);
+           		 			view.fitContent();
+           		 			view.updateUI();
+           		 		}
 
         		    	public void algorithmStateChanged(AlgorithmEvent evt) 
         		    	{
