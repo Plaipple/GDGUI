@@ -1126,7 +1126,7 @@ public class MainFrame extends JFrame {
             				double energy = 0;		
             		    	if (lambdaOne != 0) energy += SimulatedAnnealingFactory.calculateNodeNodeDistances(graph, lambdaOne, nodePositions);
             		    	//if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateBorderlinePositions(graph, lambdaTwo);
-            		    	if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateCrossingNumber(graph, lambdaTwo);
+            		    	if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateCrossingNumber(graph, lambdaTwo, nodePositions);
             		    	if (lambdaThree != 0) energy += SimulatedAnnealingFactory.calculateAvgEdgeLength(graph, lambdaThree, nodePositions);
             		    	if (lambdaFour != 0) energy += SimulatedAnnealingFactory.calculateNodeEdgeDistances(graph, lambdaFour, nodePositions);
             		    	return energy;

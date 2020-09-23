@@ -157,8 +157,8 @@ public abstract class SimulatedAnnealingAlgorithm implements Runnable
 
         		//The radius of the new position is determined dynamically and decreases during the runtime.
         		//(at 1000 iterations it decreases by 0.1%)
-        		//positionRadius = 100 * ((double)temperature / (double)maxNoOfIterations);#
-        		positionRadius = 100 * ((double)(newtemperature * maxNoOfIterations / 6) / (double)maxNoOfIterations);
+        		positionRadius = 100 * ((double)temperature / (double)maxNoOfIterations);
+        		//positionRadius = 100 * ((double)(newtemperature * maxNoOfIterations / 6) / (double)maxNoOfIterations);
 
         		//Creating randomized coordinates for the new position within the distance of positionRadius in any direction
         		int signx = (Math.random() > 0.5) ? -1 : 1;
@@ -175,7 +175,7 @@ public abstract class SimulatedAnnealingAlgorithm implements Runnable
 
         		/// Now the same procedure is executed for the new Point
         		energyNew = this.calculateEnergyFunction();
-
+        		
         		//the better positioning leads to saving the coordinates for the node n and updating the actual graph
         		if (energyNew < energyOld)
         		{

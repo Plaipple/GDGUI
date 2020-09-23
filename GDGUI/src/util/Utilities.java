@@ -304,5 +304,33 @@ public class Utilities {
     	PointD right = new PointD(bound_right, 0);
     	return top.distanceTo(bottom) * left.distanceTo(right);
     }
+    
+    
+    public static double calculateEdgeLengthRatio(GraphComponent view)
+    {
+    	double ratio = 0;
+    	double longestEdge = Double.NEGATIVE_INFINITY;
+    	double shortestEdge = Double.POSITIVE_INFINITY;
+    	double currentDistance = 0;
+    	
+    	for (IEdge e : view.getGraph().getEdges())
+    	{
+    		YPoint sourceNode = new YPoint(e.getSourceNode().getLayout().getCenter().x, e.getSourceNode().getLayout().getCenter().y);
+    		YPoint targetNode = new YPoint(e.getTargetNode().getLayout().getCenter().x, e.getTargetNode().getLayout().getCenter().y);
+    		currentDistance = sourceNode.distanceTo(targetNode);
+    		if (currentDistance > longestEdge)
+    		{
+    			longestEdge = currentDistance;
+    		}
+    		if (currentDistance < shortestEdge)
+    		{
+    			shortestEdge = currentDistance;
+    		}
+    	}
+    	
+    	ratio = longestEdge / shortestEdge;
+    	
+    	return ratio;
+    }
 
 }

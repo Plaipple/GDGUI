@@ -71,6 +71,8 @@ public class Experiment
                                                                         .append("\t")
                                                                         .append("Eades Edge Length")
                                                                         .append("\t")
+                                                                        .append("Eades Edge Ratio")
+                                                                        .append("\t")
                                                                         .append("Eades Crossings")
                                                                         .append("\t")
                                                                         .append("Eades Distance")
@@ -121,6 +123,8 @@ public class Experiment
                                                                         .append("\t")
                                                                         .append("RM Edge Length")
                                                                         .append("\t")
+                                                                        .append("RM Edge Ratio")
+                                                                        .append("\t")
                                                                         .append("RM Crossings")
                                                                         .append("\t")
                                                                         .append("RM Distance")
@@ -136,8 +140,9 @@ public class Experiment
 
             String inputDirectory = "C:/Users/patri_000/Desktop/Graphml/";
             String outputDirectoryEades = "C:/Users/patri_000/Desktop/OutputEades/";
-            String outputDirectoryNodeEdge = "C:/Users/patri_000/Desktop/OutputSA/";
+            String outputDirectoryNodeEdge = "C:/Users/patri_000/Desktop/OutputSimAnneal/";
             String outputDirectoryRandomMovement = "C:/Users/patri_000/Desktop/OutputRandMov/";
+            String outputDirectorySimAnneal = "C:/Users/patri_000/Desktop/OutputSimAnneal/";
 
             java.io.File dir = new java.io.File(inputDirectory);
 
@@ -164,6 +169,7 @@ public class Experiment
                 double eadesEdgeLength = 0.0;
                 double eadesDistance = 0.0;
                 double eadesArea = 0.0;
+                double eadesRatio = 0.0;
                 int eadesNoOfCrossings = 0;
                 int eadesIterations = 0;
                 long eadesTime = 0;
@@ -173,6 +179,7 @@ public class Experiment
                 double randMovEdgeLength = 0.0;
                 double randMovDistance = 0.0;
                 double randMovArea = 0.0;
+                double randMovRatio = 0.0;
                 int randMovNoOfCrossings = 0;
                 int randMovIterations = 0;
                 long randMovTime = 0;
@@ -227,8 +234,10 @@ public class Experiment
                     eadesNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     eadesDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     eadesArea = util.Utilities.calculateUsedArea(view);
+                    eadesRatio = util.Utilities.calculateEdgeLengthRatio(view);
                     eadesIterations = eades.getMaxNoOfIterations();
                     eadesTime = (finishTime - startTime);*/
+                    
                     
                     view.getGraph().clear();
                     ioh.read(view.getGraph(), inputDirectory + children[i]);
@@ -236,12 +245,26 @@ public class Experiment
                     view.requestFocus();
                     startTime = System.currentTimeMillis();
                     //Then, run the RandomMovement algorithm
-                    layout.algo.RandomMovementAlgorithm randMov= new layout.algo.RandomMovementAlgorithm(view, 1000) {
+                    /*layout.algo.RandomMovementAlgorithm randMov = new layout.algo.RandomMovementAlgorithm(view, 1000) {
                         public void calculatePositions() {
-                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, false, false, true, false, false, maxNoOfIterations);
+                        	RandomMovementFactory.randomMovement(graph, 8, 10, 250, true, true, 10, 10, false, false, true, false, false, false, maxNoOfIterations);
                         }
+                    };*/
+                    
+                    layout.algo.SimulatedAnnealingAlgorithm simAnneal = new layout.algo.SimulatedAnnealingAlgorithm(view, 1000, 40) {
+                    	public double calculateEnergyFunction()
+            		    {            		    	
+            				double energy = 0;		
+            		    	//if (lambdaOne != 0) energy += SimulatedAnnealingFactory.calculateNodeNodeDistances(graph, lambdaOne, nodePositions);
+            		    	//if (lambdaTwo != 0) energy += SimulatedAnnealingFactory.calculateBorderlinePositions(graph, lambdaTwo);
+            		    	energy += SimulatedAnnealingFactory.calculateCrossingNumber(graph, 40, nodePositions);
+            				//if (lambdaThree != 0)energy += SimulatedAnnealingFactory.calculateAvgEdgeLength(graph, lambdaThree, nodePositions);
+            		    	//if (lambdaFour != 0) energy += SimulatedAnnealingFactory.calculateNodeEdgeDistances(graph, lambdaFour, nodePositions);
+            		    	return energy;
+            		    }
                     };
           			
+                    
                     LayoutUtilities.applyLayout(view.getGraph(), new OrganicLayout());
                     
                     GraphTransformer gt = new GraphTransformer();
@@ -249,11 +272,11 @@ public class Experiment
                     gt.setScaleFactor(Double.valueOf(3));
                     LayoutUtilities.morphLayout(view, gt, Duration.ofSeconds(0), null);
                     
-                    randMov.run();
+                    simAnneal.run();
 					
                     finishTime = System.currentTimeMillis();
                     
-                    ioh.write(view.getGraph(), outputDirectoryRandomMovement + children[i]);
+                    ioh.write(view.getGraph(), outputDirectorySimAnneal + children[i]);
                     
                     randMovAngular = util.Utilities.calculateAngularResolution(view);
                     randMovCrossing = util.Utilities.calculateCrossingResolution(view);
@@ -261,7 +284,8 @@ public class Experiment
                     randMovNoOfCrossings = util.Utilities.calculateNumberOfCrossings(view);
                     randMovDistance = util.Utilities.calculateshortestNodeEdgeDistance(view);
                     randMovArea = util.Utilities.calculateUsedArea(view);
-                    randMovIterations = randMov.getMaxNoOfIterations();
+                    randMovRatio = util.Utilities.calculateEdgeLengthRatio(view);
+                    randMovIterations = simAnneal.getMaxNoOfIterations();
                     randMovTime = (finishTime - startTime);
                    
                     java.lang.StringBuffer buffer = new java.lang.StringBuffer().append(children[i])
@@ -281,6 +305,8 @@ public class Experiment
                                                                                 .append(eadesIterations)
                                                                                 .append("\t")
                                                                                 .append(df.format(eadesEdgeLength))//.replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(df.format(eadesRatio))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(eadesNoOfCrossings)
                                                                                 .append("\t")
@@ -306,6 +332,8 @@ public class Experiment
                                                                                 .append(randMovIterations)
                                                                                 .append("\t")
                                                                                 .append(df.format(randMovEdgeLength))//.replace(',', '.'))
+                                                                                .append("\t")
+                                                                                .append(df.format(randMovRatio))//.replace(',', '.'))
                                                                                 .append("\t")
                                                                                 .append(randMovNoOfCrossings)
                                                                                 .append("\t")

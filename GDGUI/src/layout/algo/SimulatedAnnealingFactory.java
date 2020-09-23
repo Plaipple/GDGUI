@@ -50,7 +50,7 @@ public class SimulatedAnnealingFactory
     }
     
     
-    public static double calculateCrossingNumber (IGraph graph, double lambdaTwo)
+    public static double calculateCrossingNumber (IGraph graph, double lambdaTwo, PointD[] nodePositions)
     {
     	//calculate the number of edge intersections
     	double energyCrossings = 0;
@@ -66,13 +66,13 @@ public class SimulatedAnnealingFactory
     	
     	for (int i = 0; i < edges.length; i++)
     	{
-			YPoint n1 = new YPoint(edges[i].getSourceNode().getLayout().getCenter().x, edges[i].getSourceNode().getLayout().getCenter().y);
-			YPoint n2 = new YPoint(edges[i].getTargetNode().getLayout().getCenter().x, edges[i].getTargetNode().getLayout().getCenter().y);
+			YPoint n1 = new YPoint(nodePositions[(int)edges[i].getSourceNode().getTag()].x, nodePositions[(int)edges[i].getSourceNode().getTag()].y);
+			YPoint n2 = new YPoint(nodePositions[(int)edges[i].getTargetNode().getTag()].x, nodePositions[(int)edges[i].getTargetNode().getTag()].y);
 					
     		for (int j = i+1; j < edges.length; j++)
     		{
-    			YPoint u1 = new YPoint(edges[j].getSourceNode().getLayout().getCenter().x, edges[j].getSourceNode().getLayout().getCenter().y);
-    			YPoint u2 = new YPoint(edges[j].getTargetNode().getLayout().getCenter().x, edges[j].getTargetNode().getLayout().getCenter().y);
+    			YPoint u1 = new YPoint(nodePositions[(int)edges[j].getSourceNode().getTag()].x, nodePositions[(int)edges[j].getSourceNode().getTag()].y);
+    			YPoint u2 = new YPoint(nodePositions[(int)edges[j].getTargetNode().getTag()].x, nodePositions[(int)edges[j].getTargetNode().getTag()].y);
     			
     			LineSegment l_e1 = new LineSegment(n1, n2);
     			LineSegment l_e2 = new LineSegment(u1, u2);
@@ -126,7 +126,7 @@ public class SimulatedAnnealingFactory
     	double energyEdgeLengths = 0;
     	for (IEdge e : graph.getEdges())
 		{			
-			energyEdgeLengths += Math.abs(150 - nodePositions[(int)e.getSourceNode().getTag()].distanceTo
+			energyEdgeLengths += Math.abs(250 - nodePositions[(int)e.getSourceNode().getTag()].distanceTo
 					                           (nodePositions[(int)e.getTargetNode().getTag()]));
 		}
 		energyEdgeLengths /= graph.getEdges().size();
