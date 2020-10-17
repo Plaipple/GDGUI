@@ -859,7 +859,7 @@ public class MainFrame extends JFrame {
         JTextField repulsionTextField = new JTextField("50000", 8);
         JTextField thresholdTextField = new JTextField("0.01", 8);
         JTextField springStiffTextField = new JTextField("150", 8);
-        JTextField natSpringLengthTextField = new JTextField("100", 8);
+        JTextField natSpringLengthTextField = new JTextField("150", 8);
         JCheckBox checkSpringRepulsion = new JCheckBox();
         checkSpringRepulsion.setSelected(true);
         JCheckBox checkRepulsion = new JCheckBox();
